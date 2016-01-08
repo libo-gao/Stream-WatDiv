@@ -1,0 +1,8 @@
+Developed by Alexander Sch\"{a}tzle from University of Freiburg
+http://dbis.informatik.uni-freiburg.de/team/schaetzle/alexander
+
+This workload is designed to test the performance of a SUT for linear queries of different size (number of triple patterns).
+The workload contains 2 types of queries (ML-1, ML-2) which are bound by user or retailer, respectively.
+The query sizes range between 5 and 10 triple patterns for each type. For example, query ML-1-6 is a user bound query with 6 triple patterns.
+In contrast to the Incremental Linear workload, the queries are not related to one other but completely independent.
+Terms enclosed within % are placeholders that get instantiated dynamically by the WatDiv query generator based on the #mapping command.

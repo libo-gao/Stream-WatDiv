@@ -1,0 +1,10 @@
+Developed by Alexander Sch\"{a}tzle from University of Freiburg
+http://dbis.informatik.uni-freiburg.de/team/schaetzle/alexander
+
+This workload is designed to test the performance of a SUT for linear queries with increasing size (number of triple patterns).
+The workload contains 3 types of queries (IL-1, IL-2, IL-3) which are bound by user, retailer or unbound, respectively.
+Each query starts with 5 triple patterns and we incrementally add triple patterns to the initial query (up to 10 triple patterns).
+For example, query IL-1-6 adds another triple pattern to query IL-1-5 and hence expands the path defined by the query by one.
+Terms enclosed within % are placeholders that get instantiated dynamically by the WatDiv query generator based on the #mapping command.
+
+Remark: IL-3 queries produce very large result sets
