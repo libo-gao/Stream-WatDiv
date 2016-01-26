@@ -55,6 +55,7 @@ ostream& operator<<(ostream& os, const DISTRIBUTION_TYPES::enum_t & distribution
     return os;
 }
 
+//construct triple(s, p, p) from string-presented input
 triple_st::triple_st (const string & line){
     vector<string> result;
     string trimmed = line.substr(0, line.find_last_of("."));
@@ -75,6 +76,7 @@ bool triple_st::operator== (const triple_st & rhs) const{
     return _subject.compare(rhs._subject)==0 && _predicate.compare(rhs._predicate)==0 && _object.compare(rhs._object)==0;
 }
 
+//parse the triple file
 vector<triple_st> triple_st::parse_file (const char * filename){
     vector<triple_st> result;
     ifstream ifs (filename);
@@ -117,6 +119,7 @@ bool o_compare::operator() (const triple_st & lhs, const triple_st & rhs) const{
     }
 }
 
+//constructor of  namespace_m_t
 namespace_m_t::namespace_m_t (string token){
     unsigned int pos = token.find_first_of('=');
     if (pos!=string::npos){
@@ -129,6 +132,7 @@ namespace_m_t::namespace_m_t (string token){
     }
 }
 
+//***********not yet***************************
 namespace_m_t * namespace_m_t::parse (const string & line){
     string namespace_declaration;
 
