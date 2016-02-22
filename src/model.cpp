@@ -417,6 +417,10 @@ predicate_group_m_t::~predicate_group_m_t(){
     delete _type_restriction;
 }
 
+// example input: <pgroup>  0.8  @wsdbm:ProductCategory0
+// gen_probability = 0.8
+// type_restriction = wsdbm:ProductCategory0
+//
 predicate_group_m_t * predicate_group_m_t::parse (const string & line){
     float gen_probability = 1.0;
     string type_restriction;
@@ -553,6 +557,11 @@ void resource_m_t::process_type_restrictions (const namespace_map & n_map, const
     }
 }
 
+//sample input: <type>      wsdbm:Product 250
+// resource_m_t -> scalable = false(when <type*>)
+//              -> type_prefix = wsdbm:Product
+//              -> scaling_coefficient = 250
+//
 resource_m_t * resource_m_t::parse (const string & line){
     bool scalable = true;
     string type_prefix ("not_defined");
@@ -880,6 +889,8 @@ void association_m_t::process_type_restrictions (const namespace_map & n_map, co
     }
 }
 
+// example input: #association  wsdbm:User  wsdbm:follows       wsdbm:User      2 5[normal] 0.2 ZIPFIAN @null       @wsdbm:Role2
+//                              subject_type     predicate      object_type  left_cardinality right_cardinality  left_cover  right_distribution  subject_type_restriction object_type_restriction
 association_m_t * association_m_t::parse (const map<string, unsigned int> & id_cursor_map, const string & line){
     string subject_type ("");
     string predicate ("");
@@ -1587,6 +1598,12 @@ model::~model(){
     }
 }
 
+// model::generate() -- generate data
+// resource_m_t -> generate(_namespace_map, _id_cursor_map)
+// association_m_t -> generate(_namespace_map, _type_map, _id_cursor_map)
+// resource_m_t -> process_type_restrictions()
+// association_m_t -> process_type_restrictions()
+//
 void model::generate (int scale_factor){
     boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
 
@@ -1648,6 +1665,10 @@ void model::compute_statistics (const vector<triple_st> & triples){
         }
     }
 }
+
+// predicate_group_m_t -> predicate_array => predicate_m_t
+//                     -> gen_probability
+//                     -> type_restriction
 
 void model::parse (const char * filename){
     stack<pair<short,void*> > object_stack;
