@@ -158,7 +158,7 @@ struct resource_m_t {
     resource_m_t (const resource_m_t & rhs);
     ~resource_m_t ();
 
-    void generate (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map);
+    void generate (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos);
     void process_type_restrictions (const namespace_map & n_map, const type_map & t_map, const map<string, unsigned int> & id_cursor_map);
 
     static resource_m_t * parse (const string & line);
@@ -190,8 +190,8 @@ struct association_m_t {
     association_m_t (string subject_type, string predicate, string object_type, unsigned int left_cardinality, unsigned int right_cardinality, float left_cover, DISTRIBUTION_TYPES::enum_t right_distribution, const string * subject_type_restriction, const string * object_type_restriction);
     ~association_m_t ();
 
-    void generate (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map);
-    void process_type_restrictions (const namespace_map & n_map, const type_map & t_map, const map<string, unsigned int> & id_cursor_map);
+    void generate (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos);
+    void process_type_restrictions (const namespace_map & n_map, const type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos);
 
     static association_m_t * parse (const map<string, unsigned int> & id_cursor_map, const string & line);
 };
