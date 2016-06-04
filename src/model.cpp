@@ -745,6 +745,8 @@ void association_m_t::generate (const namespace_map & n_map, type_map & t_map, c
 
         boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
 
+        boost::random::mt19937 gen;
+
         for (unsigned int left_id=0; left_id<left_instance_count; left_id++){
             float pr = ((float) rand()) / ((float) RAND_MAX);
             if (pr<=_left_cover){
@@ -791,19 +793,17 @@ void association_m_t::generate (const namespace_map & n_map, type_map & t_map, c
                         object_str.append(">");
                         //triple_lines.push_back(triple_st(subject_str, predicate_str, object_str));
                         triple_st line (subject_str, predicate_str, object_str);
-                        if(_predicate == "wsdbm:likes"||_predicate == "rev:hasReview"){
+
+                        if(_predicate =="wsdbm:likes"){
                             fos<<line;
-                            if(_predicate =="wsdbm:likes"){
-                                boost::random::mt19937 gen;
-                                boost::uniform_real<double> real(0, 1);
-                                fos<<"\t"<<real(gen)<<" .\n";
-                            }
-                            else{
-                                fos<<" .\n";
-                            }
+                            boost::uniform_real<double> real(0, 1);
+                            fos<<"\t"<<real(gen)<<"\t.\n";
+                        }
+                        else if(_predicate == "rev:hasReview"){
+                            fos<<line<<"\t.\n";
                         }
                         else {
-                            cout << line << " .\n";
+                            cout<<line<<"\t.\n";
                         }
 
                         // Save type assertions...
@@ -896,6 +896,7 @@ void association_m_t::process_type_restrictions (const namespace_map & n_map, co
 
                                 //triple_lines.push_back(triple_st(subject_str, predicate_str, object_str));
                                 triple_st line (subject_str, predicate_str, object_str);
+
                                 if(_predicate == "rev:reviewer"){
                                     fos<<line<<" .\n";
                                 }else {
@@ -2205,6 +2206,40 @@ void model::save (const char * filename) const{
     fos.close();
 }
 
+vector<string> split(const string s, char delim) {
+    stringstream ss(s);
+    string item;
+    vector<string> elems;
+    while (getline(ss, item, delim)) {
+        elems.push_back(item);
+        // elems.push_back(std::move(item)); // if C++11 (based on comment from @mchiasson)
+    }
+    return elems;
+}
+
+void process_stream_file(){
+    ifstream fin ("assoc_stream.txt");
+    ofstream fos_review("assoc_review_stream.txt");
+    ofstream fos_like("assoc_like_stream.txt");
+
+    string line;
+    while(getline(fin, line)){
+        vector<string> items = split(line, '\t');
+        if(items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/likes>") fos_like<<line<<'\n';
+        else fos_review<<line<<'\n';
+    }
+
+    fin.close();
+    fos_like.close();
+    fos_review.close();
+
+    string cmd = "sort -n -k 4 assoc_like_stream.txt > sorted_assoc_like_stream.txt";
+    char ls_cmd[50];
+    sprintf(ls_cmd, cmd.c_str());
+    system(ls_cmd);
+
+};
+
 int main(int argc, const char* argv[]) {
     dictionary * dict = dictionary::get_instance();
     if ((argc==2 || argc==4 || argc==5 || argc>=6) && argv[1][0]=='-'){
@@ -2212,10 +2247,11 @@ int main(int argc, const char* argv[]) {
         const char * model_filename = argv[2];
         model cur_model (model_filename);
         //statistics stat (cur_model);
-        if(argc==5 && argv[1][0]=='-' && argv[1][1]=='d' && argv[1][2]=='s'){
+        if(argc==4 && argv[1][0]=='-' && argv[1][1]=='d' && argv[1][2]=='s'){
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
             cur_model.generate(scale_factor);
             cur_model.save("saved.txt");
+            process_stream_file();
             dictionary::destroy_instance();
             return 0;
         }else if (argc==4 && argv[1][0]=='-' && argv[1][1]=='d'){
