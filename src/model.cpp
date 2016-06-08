@@ -2225,14 +2225,37 @@ void process_stream_file(){
     string line;
     while(getline(fin, line)){
         vector<string> items = split(line, '\t');
-        if(items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/likes>") fos_like<<line<<'\n';
-        else fos_review<<line<<'\n';
+        if(items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/likes>") {
+            string result="";
+            size_t found = items[0].find('>');
+            result.append(items[0].substr(1, found-1)+"\t");
+            found = items[1].find('>');
+            result.append(items[1].substr(1, found-1)+"\t");
+            //result.append("http://myexample.org/likes");
+            //result.append("\t");
+            found = items[2].find('>');
+            result.append(items[2].substr(1, found-1)+"\t");
+            result.append(items[3]);
+            fos_like<<result<<'\n';
+        }
+        else {
+            string result="";
+            size_t found = items[0].find('>');
+            result.append(items[0].substr(1, found-1)+"\t");
+            found = items[1].find('>');
+            result.append(items[1].substr(1, found-1)+"\t");
+            found = items[2].find('>');
+            result.append(items[2].substr(1, found-1));
+            fos_review<<result<<'\n';
+            //fos_review<<line<<'\n';
+        }
     }
 
     fin.close();
     fos_like.close();
     fos_review.close();
 
+    //sort the assoc_like files according to the attached random number
     string cmd = "sort -n -k 4 assoc_like_stream.txt > sorted_assoc_like_stream.txt";
     char ls_cmd[50];
     sprintf(ls_cmd, cmd.c_str());
@@ -2247,6 +2270,7 @@ int main(int argc, const char* argv[]) {
         const char * model_filename = argv[2];
         model cur_model (model_filename);
         //statistics stat (cur_model);
+        //./watdiv -ds ../../model/wsdbm-data-model.txt 1 > static_rdf.txt
         if(argc==4 && argv[1][0]=='-' && argv[1][1]=='d' && argv[1][2]=='s'){
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
             cur_model.generate(scale_factor);
