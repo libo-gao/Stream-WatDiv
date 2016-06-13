@@ -158,7 +158,7 @@ struct resource_m_t {
     resource_m_t (const resource_m_t & rhs);
     ~resource_m_t ();
 
-    void generate (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos);
+    void generate (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase);
     void process_type_restrictions (const namespace_map & n_map, const type_map & t_map, const map<string, unsigned int> & id_cursor_map);
 
     static resource_m_t * parse (const string & line);

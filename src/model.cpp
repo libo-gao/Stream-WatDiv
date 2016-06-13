@@ -29,6 +29,19 @@ static int MAX_LITERAL_WORDS = 25;
 
 static map<int,vector<double>*> zipfian_cache;
 
+struct hashfunc {
+    template<typename T, typename U>
+    size_t operator()(const pair<T, U> &x) const {
+        return hash<T>()(x.first) ^ hash<U>()(x.second);
+    }
+};
+
+static unordered_map<string, pair<string, string>> purchase;
+static unordered_map<string, double> purchaseTime;
+static unordered_map<pair<string, string>, string, hashfunc> reversePurchase;
+static unordered_map<string, pair<string, string>> review;
+static unordered_map<string, double> reviewTime;
+
 static boost::mt19937 BOOST_RND_GEN = boost::mt19937(static_cast<unsigned> (time(0)));
 static boost::normal_distribution<double> BOOST_NORMAL_DIST = boost::normal_distribution<double>(0.5, (0.5/3.0));
 static boost::variate_generator<boost::mt19937, boost::normal_distribution<double> > BOOST_NORMAL_DIST_GEN (BOOST_RND_GEN, BOOST_NORMAL_DIST);
@@ -485,19 +498,20 @@ resource_m_t::~resource_m_t (){
     }
 }
 
-void resource_m_t::generate (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos){
+void resource_m_t::generate (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase){
     if (id_cursor_map.find(_type_prefix)==id_cursor_map.end()){
         id_cursor_map[_type_prefix] = 0;
     }
+    boost::random::mt19937 gen;
     for (unsigned int id=id_cursor_map[_type_prefix]; id<(id_cursor_map[_type_prefix] + _scaling_coefficient); id++){
         string subject = "";
         subject.append("<");
         subject.append(n_map.replace(_type_prefix));
         subject.append(boost::lexical_cast<string>(id));
         subject.append(">");
-        if(_type_prefix == "wsdbm:Review"){
-            fos<<"[ \n";
-        }
+        //if(_type_prefix == "wsdbm:Review"){
+        //    fos<<"[ \n";
+        //}
 
         for (vector<predicate_group_m_t*>::const_iterator itr2=_predicate_group_array.begin(); itr2!=_predicate_group_array.end(); itr2++){
             predicate_group_m_t * predicate_group = *itr2;
@@ -517,15 +531,24 @@ void resource_m_t::generate (const namespace_map & n_map, map<string, unsigned i
                         //triple_lines.push_back(triple_st(triple_str.substr(0, tab1_index), triple_str.substr((tab1_index+1), (tab2_index-tab1_index-1)), triple_str.substr(tab2_index+1)));
                         triple_st line (triple_str.substr(0, tab1_index), triple_str.substr((tab1_index+1), (tab2_index-tab1_index-1)), triple_str.substr(tab2_index+1));
                         if(_type_prefix == "wsdbm:Review"){
-                            fos<<line<<". \n";
+                            fos_review<<line<<". \n";
+                        }else if(_type_prefix == "wsdbm:Purchase"){
+                            boost::uniform_real<double> real(0, 1);
+                            if(purchaseTime.find(subject) == purchaseTime.end()) purchaseTime[subject] = real(gen);
+                            fos_purchase<<line<<". \n";
+                            //fos_purchase<<line<<"\t"<<purchaseTime[subject]<<". \n";
+                        }else {
+                            cout << line << " .\n";
                         }
-                        cout<<line<<" .\n";
                     }
                 }
             }
         }
         if(_type_prefix == "wsdbm:Review"){
-            fos<<"] \n";
+         //   fos<<"] \n";
+            fos_review<<'\n';
+        }else if(_type_prefix == "wsdbm:Purchase"){
+            fos_purchase<<'\n';
         }
     }
     id_cursor_map[_type_prefix] += _scaling_coefficient;
@@ -800,6 +823,21 @@ void association_m_t::generate (const namespace_map & n_map, type_map & t_map, c
                             fos<<"\t"<<real(gen)<<"\t.\n";
                         }
                         else if(_predicate == "rev:hasReview"){
+                            if(review.find(object_str)==review.end()){
+                                pair<string, string> temp("", subject_str);
+                                review[object_str] = temp;
+                            }else{
+                                review[object_str].second = subject_str;
+                            }
+                            fos<<line<<"\t.\n";
+                        }
+                        else if(_predicate == "wsdbm:purchaseFor"){
+                            if(purchase.find(subject_str)==purchase.end()) {
+                                pair<string, string> temp("", object_str);
+                                purchase[subject_str] = temp;
+                            }else{
+                                purchase[subject_str].second = object_str;
+                            }
                             fos<<line<<"\t.\n";
                         }
                         else {
@@ -898,9 +936,25 @@ void association_m_t::process_type_restrictions (const namespace_map & n_map, co
                                 triple_st line (subject_str, predicate_str, object_str);
 
                                 if(_predicate == "rev:reviewer"){
-                                    fos<<line<<" .\n";
-                                }else {
-                                    cout << line << " .\n";
+                                    if(review.find(subject_str)==review.end()){
+                                        pair<string, string> temp(object_str, "");
+                                        review[subject_str] = temp;
+                                    }else{
+                                        review[subject_str].first = object_str;
+                                    }
+                                    fos<<line<<"\t.\n";
+                                }
+                                else if(_predicate == "wsdbm:makesPurchase"){
+                                    if(purchase.find(object_str)==purchase.end()){
+                                        pair<string, string> temp(subject_str," ");
+                                        purchase[object_str] = temp;
+                                    }else{
+                                        purchase[object_str].first = subject_str;
+                                    }
+                                    fos<<line<<"\t.\n";
+                                }
+                                else {
+                                    cout << line << "\t.\n";
                                 }
                             }
                         }
@@ -1631,11 +1685,12 @@ void model::generate (int scale_factor){
     boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
     ofstream fos_assoc ("assoc_stream.txt");
     ofstream fos_review("review_stream.txt");
+    ofstream fos_purchase("purchase_stream.txt");
     for (int i=0; i<scale_factor; i++){
         for (vector<resource_m_t*>::iterator itr2=_resource_array.begin(); itr2!=_resource_array.end(); itr2++){
             resource_m_t * resource = *itr2;
             if (i==0 || resource->_scalable){
-                resource->generate(_namespace_map, _id_cursor_map, fos_review);
+                resource->generate(_namespace_map, _id_cursor_map, fos_review, fos_purchase);
             }
         }
     }
@@ -1665,6 +1720,7 @@ void model::generate (int scale_factor){
     boost::posix_time::ptime t5 (bpt::microsec_clock::universal_time());
 
     fos_review.close();
+    fos_purchase.close();
     fos_assoc.close();
 
     //cerr << "[t1--t2]" << " " << (t2-t1).total_microseconds() << "\n";
@@ -2217,6 +2273,12 @@ vector<string> split(const string s, char delim) {
     return elems;
 }
 
+string removeBracket(string ss){
+    if(!ss.size()) return ss;
+    size_t found = ss.find('>');
+    return ss.substr(1, found-1);
+}
+
 void process_stream_file(){
     ifstream fin ("assoc_stream.txt");
     ofstream fos_review("assoc_review_stream.txt");
@@ -2247,7 +2309,6 @@ void process_stream_file(){
             found = items[2].find('>');
             result.append(items[2].substr(1, found-1));
             fos_review<<result<<'\n';
-            //fos_review<<line<<'\n';
         }
     }
 
@@ -2260,6 +2321,69 @@ void process_stream_file(){
     char ls_cmd[50];
     sprintf(ls_cmd, cmd.c_str());
     system(ls_cmd);
+
+    //build the reviewPurchase
+    for(auto it = purchase.begin();it!=purchase.end();it++){
+        reversePurchase[it->second] = it->first;
+    }
+
+    ifstream in_review ("review_stream.txt");
+    ifstream in_purchase("purchase_stream.txt");
+    ofstream out_review ("review.txt");
+    ofstream out_purchase ("purchase.txt");
+
+    string curr_review = "";
+    double curr_time = 0.0;
+    bool getTime = true;
+    while(getline(in_review, line)){
+        if (!line.size()) {
+            if(getTime) continue;
+            string review1 = removeBracket(curr_review) +"\t"+ "rev:reviewer"+"\t"+removeBracket(review[curr_review].first) + "\t" + to_string(curr_time);
+            string review2 = removeBracket(review[curr_review].second) + "\t" + "rev:hasReview" + "\t" + removeBracket(curr_review) + "\t" + to_string(curr_time);
+            out_review<<review1<<"\n"<<review2<<"\n"<<"\n";
+            getTime = true;
+            continue;
+        }
+        vector<string> items = split(line, '\t');
+        if(getTime){
+            curr_time = purchaseTime[reversePurchase[review[items[0]]]];
+            curr_review = items[0];
+            getTime = false;
+        }
+        string result="";
+        size_t found = items[0].find('>');
+        result.append(items[0].substr(1, found-1)+"\t");
+        found = items[1].find('>');
+        result.append(items[1].substr(1, found-1)+"\t");
+        result.append(items[2]+"\t");
+        result.append(to_string(curr_time));
+        out_review<<result<<"\n";
+    }
+
+    string curr_purchase = "";
+    while(getline(in_purchase, line)){
+        if(!line.size()){
+            string purchase1 = removeBracket(purchase[curr_purchase].first) + "\t" + "wsdbm:makesPurchase" + "\t" + removeBracket(curr_purchase);
+            string purchase2 = removeBracket(curr_purchase) + "\t" + "wsdbm:purchaseFor" + "\t" + removeBracket(purchase[curr_purchase].second);
+            out_purchase<<purchase1<<'\n'<<purchase2<<'\n'<<'\n';
+            continue;
+        }
+        vector<string> items = split(line, '\t');
+        curr_purchase = items[0];
+        string result="";
+        size_t found = items[0].find('>');
+        result.append(items[0].substr(1, found-1)+"\t");
+        found = items[1].find('>');
+        result.append(items[1].substr(1, found-1)+"\t");
+        result.append(items[2]+"\t");
+        result.append(to_string(purchaseTime[items[0]]));
+        out_purchase<<result<<'\n';
+    }
+
+    in_review.close();
+    in_purchase.close();
+    out_review.close();
+    out_purchase.close();
 
 };
 
