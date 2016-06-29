@@ -2335,6 +2335,7 @@ void process_stream_file(){
     string curr_review = "";
     double curr_time = 0.0;
     bool getTime = true;
+    bool skip = false;
     while(getline(in_review, line)){
         if (!line.size()) {
             if(getTime) continue;
@@ -2348,8 +2349,11 @@ void process_stream_file(){
         if(getTime){
             curr_time = purchaseTime[reversePurchase[review[items[0]]]];
             curr_review = items[0];
+            if(review[curr_review].first.size()==0||review[curr_review].second.size()==0){skip = true; continue;}
+            else skip = false;
             getTime = false;
         }
+        if(skip) continue;
         string result="";
         size_t found = items[0].find('>');
         result.append(items[0].substr(1, found-1)+"\t");
