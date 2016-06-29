@@ -159,6 +159,7 @@ struct resource_m_t {
     ~resource_m_t ();
 
     void generate (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase);
+    void generate_stream_data(const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase);
     void process_type_restrictions (const namespace_map & n_map, const type_map & t_map, const map<string, unsigned int> & id_cursor_map);
 
     static resource_m_t * parse (const string & line);
@@ -191,7 +192,9 @@ struct association_m_t {
     ~association_m_t ();
 
     void generate (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos);
+    void generate_stream_data (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos);
     void process_type_restrictions (const namespace_map & n_map, const type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos);
+    void process_stream_type_restrictions (const namespace_map & n_map, const type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos);
 
     static association_m_t * parse (const map<string, unsigned int> & id_cursor_map, const string & line);
 };
@@ -298,6 +301,7 @@ struct model{
     void parse (const char * filename);
 
     void generate (int scale_factor);
+    void generate_stream_data (int scale_factor);
     void compute_statistics (const vector<triple_st> & triples);
 
     void load (const char * filename);
