@@ -498,20 +498,16 @@ resource_m_t::~resource_m_t (){
     }
 }
 
-void resource_m_t::generate (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase){
+void resource_m_t::generate (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map){
     if (id_cursor_map.find(_type_prefix)==id_cursor_map.end()){
         id_cursor_map[_type_prefix] = 0;
     }
-    boost::random::mt19937 gen;
     for (unsigned int id=id_cursor_map[_type_prefix]; id<(id_cursor_map[_type_prefix] + _scaling_coefficient); id++){
         string subject = "";
         subject.append("<");
         subject.append(n_map.replace(_type_prefix));
         subject.append(boost::lexical_cast<string>(id));
         subject.append(">");
-        //if(_type_prefix == "wsdbm:Review"){
-        //    fos<<"[ \n";
-        //}
 
         for (vector<predicate_group_m_t*>::const_iterator itr2=_predicate_group_array.begin(); itr2!=_predicate_group_array.end(); itr2++){
             predicate_group_m_t * predicate_group = *itr2;
@@ -530,25 +526,10 @@ void resource_m_t::generate (const namespace_map & n_map, map<string, unsigned i
 
                         //triple_lines.push_back(triple_st(triple_str.substr(0, tab1_index), triple_str.substr((tab1_index+1), (tab2_index-tab1_index-1)), triple_str.substr(tab2_index+1)));
                         triple_st line (triple_str.substr(0, tab1_index), triple_str.substr((tab1_index+1), (tab2_index-tab1_index-1)), triple_str.substr(tab2_index+1));
-                        if(_type_prefix == "wsdbm:Review"){
-                            fos_review<<line<<". \n";
-                        }else if(_type_prefix == "wsdbm:Purchase"){
-                            boost::uniform_real<double> real(0, 1);
-                            if(purchaseTime.find(subject) == purchaseTime.end()) purchaseTime[subject] = real(gen);
-                            fos_purchase<<line<<". \n";
-                            //fos_purchase<<line<<"\t"<<purchaseTime[subject]<<". \n";
-                        }else {
-                            cout << line << " .\n";
-                        }
+                        cout<<line<<" .\n";
                     }
                 }
             }
-        }
-        if(_type_prefix == "wsdbm:Review"){
-         //   fos<<"] \n";
-            fos_review<<'\n';
-        }else if(_type_prefix == "wsdbm:Purchase"){
-            fos_purchase<<'\n';
         }
     }
     id_cursor_map[_type_prefix] += _scaling_coefficient;
@@ -807,7 +788,7 @@ association_m_t::~association_m_t (){
     delete _object_type_restriction;
 }
 
-void association_m_t::generate (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos){
+void association_m_t::generate (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map){
     if (id_cursor_map.find(_subject_type)==id_cursor_map.end()){
         cerr<<"[association_m_t::parse()] Error: association cannot be defined over undefined resource '"<<_subject_type<<"'..."<<"\n";
         exit(0);
@@ -826,14 +807,12 @@ void association_m_t::generate (const namespace_map & n_map, type_map & t_map, c
 
         boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
 
-        boost::random::mt19937 gen;
-
         for (unsigned int left_id=0; left_id<left_instance_count; left_id++){
             float pr = ((float) rand()) / ((float) RAND_MAX);
             if (pr<=_left_cover){
                 unsigned int right_size = _right_cardinality;
                 if (_right_cardinality_distribution!=DISTRIBUTION_TYPES::UNDEFINED){
-                right_size = round((double) right_size * model::generate_random(_right_cardinality_distribution));
+                    right_size = round((double) right_size * model::generate_random(_right_cardinality_distribution));
                     right_size = (right_size > _right_cardinality) ? _right_cardinality : right_size;
                 }
                 for (unsigned int j=0; j<right_size; j++){
@@ -872,35 +851,10 @@ void association_m_t::generate (const namespace_map & n_map, type_map & t_map, c
                         object_str.append("<");
                         object_str.append(object);
                         object_str.append(">");
+
                         //triple_lines.push_back(triple_st(subject_str, predicate_str, object_str));
                         triple_st line (subject_str, predicate_str, object_str);
-
-                        if(_predicate =="wsdbm:likes"){
-                            fos<<line;
-                            boost::uniform_real<double> real(0, 1);
-                            fos<<"\t"<<real(gen)<<"\t.\n";
-                        }
-                        else if(_predicate == "rev:hasReview"){
-                            if(review.find(object_str)==review.end()){
-                                pair<string, string> temp("", subject_str);
-                                review[object_str] = temp;
-                            }else{
-                                review[object_str].second = subject_str;
-                            }
-                            fos<<line<<"\t.\n";
-                        }
-                        else if(_predicate == "wsdbm:purchaseFor"){
-                            if(purchase.find(subject_str)==purchase.end()) {
-                                pair<string, string> temp("", object_str);
-                                purchase[subject_str] = temp;
-                            }else{
-                                purchase[subject_str].second = object_str;
-                            }
-                            fos<<line<<"\t.\n";
-                        }
-                        else {
-                            cout<<line<<"\t.\n";
-                        }
+                        cout<<line<<" .\n";
 
                         // Save type assertions...
                         if (predicate.compare("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")==0){
@@ -909,12 +863,13 @@ void association_m_t::generate (const namespace_map & n_map, type_map & t_map, c
                     } else {
                         //cout<<"[association_m_t::generate] Warning:: failed to greedily satisfy cardinality constraints..."<<"\n";
                         //cout<<"[association_m_t::generate] Ignoring association "
-                            //<<_subject_type<<left_id<<"-->"
-                            //<<_object_type<<right_id<<" after"<<MAX_LOOP_COUNTER<<" trials..."<<"\n";
+                        //<<_subject_type<<left_id<<"-->"
+                        //<<_object_type<<right_id<<" after"<<MAX_LOOP_COUNTER<<" trials..."<<"\n";
                     }
                 }
             }
         }
+
         boost::posix_time::ptime t2 (bpt::microsec_clock::universal_time());
         //cerr    << "[association-generation]" << " " << (t2-t1).total_microseconds() << " "
         //        << _subject_type << " " << _predicate << " " << _object_type << " "
@@ -1039,7 +994,7 @@ void association_m_t::generate_stream_data (const namespace_map & n_map, type_ma
     }
 }
 
-void association_m_t::process_type_restrictions (const namespace_map & n_map, const type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos){
+void association_m_t::process_type_restrictions (const namespace_map & n_map, const type_map & t_map, const map<string, unsigned int> & id_cursor_map){
     if (id_cursor_map.find(_subject_type)==id_cursor_map.end()){
         cerr<<"[association_m_t::parse()] Error: association cannot be defined over undefined resource '"<<_subject_type<<"'..."<<"\n";
         exit(0);
@@ -1048,6 +1003,7 @@ void association_m_t::process_type_restrictions (const namespace_map & n_map, co
         cerr<<"[association_m_t::parse()] Error: association cannot be defined over undefined resource '"<<_object_type<<"'..."<<"\n";
         exit(0);
     }
+
 
     if (_post_process){
         unsigned int left_instance_count = id_cursor_map.find(_subject_type)->second;
@@ -1108,28 +1064,7 @@ void association_m_t::process_type_restrictions (const namespace_map & n_map, co
 
                                 //triple_lines.push_back(triple_st(subject_str, predicate_str, object_str));
                                 triple_st line (subject_str, predicate_str, object_str);
-
-                                if(_predicate == "rev:reviewer"){
-                                    if(review.find(subject_str)==review.end()){
-                                        pair<string, string> temp(object_str, "");
-                                        review[subject_str] = temp;
-                                    }else{
-                                        review[subject_str].first = object_str;
-                                    }
-                                    fos<<line<<"\t.\n";
-                                }
-                                else if(_predicate == "wsdbm:makesPurchase"){
-                                    if(purchase.find(object_str)==purchase.end()){
-                                        pair<string, string> temp(subject_str," ");
-                                        purchase[object_str] = temp;
-                                    }else{
-                                        purchase[object_str].first = subject_str;
-                                    }
-                                    fos<<line<<"\t.\n";
-                                }
-                                else {
-                                    cout << line << "\t.\n";
-                                }
+                                cout<<line<<" .\n";
                             }
                         }
                     }
@@ -1962,14 +1897,11 @@ model::~model(){
 //
 void model::generate (int scale_factor){
     boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
-    ofstream fos_assoc ("assoc_stream.txt");
-    ofstream fos_review("review_stream.txt");
-    ofstream fos_purchase("purchase_stream.txt");
     for (int i=0; i<scale_factor; i++){
         for (vector<resource_m_t*>::iterator itr2=_resource_array.begin(); itr2!=_resource_array.end(); itr2++){
             resource_m_t * resource = *itr2;
             if (i==0 || resource->_scalable){
-                resource->generate(_namespace_map, _id_cursor_map, fos_review, fos_purchase);
+                resource->generate(_namespace_map, _id_cursor_map);
             }
         }
     }
@@ -1978,7 +1910,7 @@ void model::generate (int scale_factor){
 
     for (vector<association_m_t*>::iterator itr1=_association_array.begin(); itr1!=_association_array.end(); itr1++){
         association_m_t * association = *itr1;
-        association->generate(_namespace_map, _type_map, _id_cursor_map, fos_assoc);
+        association->generate(_namespace_map, _type_map, _id_cursor_map);
     }
 
 
@@ -1993,14 +1925,10 @@ void model::generate (int scale_factor){
 
     for (vector<association_m_t*>::iterator itr1=_association_array.begin(); itr1!=_association_array.end(); itr1++){
         association_m_t * association = *itr1;
-        association->process_type_restrictions(_namespace_map, _type_map, _id_cursor_map, fos_assoc);
+        association->process_type_restrictions(_namespace_map, _type_map, _id_cursor_map);
     }
 
     boost::posix_time::ptime t5 (bpt::microsec_clock::universal_time());
-
-    fos_review.close();
-    fos_purchase.close();
-    fos_assoc.close();
 
     //cerr << "[t1--t2]" << " " << (t2-t1).total_microseconds() << "\n";
     //cerr << "[t2--t3]" << " " << (t3-t2).total_microseconds() << "\n";
@@ -2010,9 +1938,9 @@ void model::generate (int scale_factor){
 
 void model::generate_stream_data (int scale_factor){
     boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
-    ofstream fos_assoc ("assoc_stream.txt");
-    ofstream fos_review("review_stream.txt");
-    ofstream fos_purchase("purchase_stream.txt");
+    ofstream fos_assoc ("1_assoc_stream.txt");
+    ofstream fos_review("1_review_stream.txt");
+    ofstream fos_purchase("1_purchase_stream.txt");
     for (int i=0; i<scale_factor; i++){
         for (vector<resource_m_t*>::iterator itr2=_resource_array.begin(); itr2!=_resource_array.end(); itr2++){
             resource_m_t * resource = *itr2;
@@ -2607,9 +2535,9 @@ string removeBracket(string ss){
 }
 
 void process_stream_file(){
-    ifstream fin ("assoc_stream.txt");
-    ofstream fos_review("assoc_review_stream.txt");
-    ofstream fos_like("assoc_like_stream.txt");
+    ifstream fin ("1_assoc_stream.txt");
+    ofstream fos_review("2_assoc_review_purchase_stream.txt");
+    ofstream fos_like("2_assoc_like_stream.txt");
 
     string line;
     while(getline(fin, line)){
@@ -2620,8 +2548,6 @@ void process_stream_file(){
             result.append(items[0].substr(1, found-1)+"\t");
             found = items[1].find('>');
             result.append(items[1].substr(1, found-1)+"\t");
-            //result.append("http://myexample.org/likes");
-            //result.append("\t");
             found = items[2].find('>');
             result.append(items[2].substr(1, found-1)+"\t");
             result.append(items[3]);
@@ -2644,7 +2570,7 @@ void process_stream_file(){
     fos_review.close();
 
     //sort the assoc_like files according to the attached random number
-    string cmd = "sort -n -k 4 assoc_like_stream.txt > sorted_assoc_like_stream.txt";
+    string cmd = "sort -n -k 4 2_assoc_like_stream.txt > 3_sorted_assoc_like_stream.txt";
     char ls_cmd[50];
     sprintf(ls_cmd, cmd.c_str());
     system(ls_cmd);
@@ -2654,10 +2580,10 @@ void process_stream_file(){
         reversePurchase[it->second] = it->first;
     }
 
-    ifstream in_review ("review_stream.txt");
-    ifstream in_purchase("purchase_stream.txt");
-    ofstream out_review ("review.txt");
-    ofstream out_purchase ("purchase.txt");
+    ifstream in_review ("1_review_stream.txt");
+    ifstream in_purchase("1_purchase_stream.txt");
+    ofstream out_review ("3_review.txt");
+    ofstream out_purchase ("3_purchase.txt");
     boost::random::mt19937 gen;
 
     string curr_review = "";
@@ -2749,6 +2675,12 @@ void test(){
 
 }
 
+/**
+ * todo
+ * 1. random value for purchase and review
+ * 2. sort the purchase and review result
+ * 3. decide the distribution model
+ */
 int main(int argc, const char* argv[]) {
     dictionary * dict = dictionary::get_instance();
     if ((argc==2 || argc==4 || argc==5 || argc>=6) && argv[1][0]=='-'){
@@ -2761,8 +2693,8 @@ int main(int argc, const char* argv[]) {
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
             cur_model.generate_stream_data(scale_factor);
             cur_model.save("saved.txt");
-            test();
-            //process_stream_file();
+            //test();
+            process_stream_file();
             dictionary::destroy_instance();
             return 0;
         }else if (argc==4 && argv[1][0]=='-' && argv[1][1]=='d'){
