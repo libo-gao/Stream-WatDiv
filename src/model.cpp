@@ -540,7 +540,7 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
         id_cursor_map[_type_prefix] = 0;
     }
 
-    boost::random::mt19937 gen;
+    boost::random::mt19937 gen(time(0));
 
     for (unsigned int id=id_cursor_map[_type_prefix]; id<(id_cursor_map[_type_prefix] + _scaling_coefficient); id++){
         string subject = "";
@@ -897,7 +897,7 @@ void association_m_t::generate_stream_data (const namespace_map & n_map, type_ma
 
         boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
 
-        boost::random::mt19937 gen;
+        boost::random::mt19937 gen(time(0));
 
         for (unsigned int left_id=0; left_id<left_instance_count; left_id++){
             float pr = ((float) rand()) / ((float) RAND_MAX);
@@ -2584,7 +2584,7 @@ void process_stream_file(){
     ifstream in_purchase("1_purchase_stream.txt");
     ofstream out_review ("3_review.txt");
     ofstream out_purchase ("3_purchase.txt");
-    boost::random::mt19937 gen;
+    boost::random::mt19937 gen(time(0));
 
     string curr_review = "";
     double curr_time = 0.0;
