@@ -540,7 +540,7 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
         id_cursor_map[_type_prefix] = 0;
     }
 
-    boost::random::mt19937 gen(time(0));
+    boost::random::mt19937 gen(static_cast<unsigned> (time(0)));
 
     for (unsigned int id=id_cursor_map[_type_prefix]; id<(id_cursor_map[_type_prefix] + _scaling_coefficient); id++){
         string subject = "";
@@ -570,11 +570,11 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
                         //triple_lines.push_back(triple_st(triple_str.substr(0, tab1_index), triple_str.substr((tab1_index+1), (tab2_index-tab1_index-1)), triple_str.substr(tab2_index+1)));
                         triple_st line (triple_str.substr(0, tab1_index), triple_str.substr((tab1_index+1), (tab2_index-tab1_index-1)), triple_str.substr(tab2_index+1));
                         if(_type_prefix == "wsdbm:Review"){
-                            fos_review<<line<<". \n";
+                            fos_review<<line<<"\n";
                         }else if(_type_prefix == "wsdbm:Purchase"){
                             boost::uniform_real<double> real(0, 1);
                             if(purchaseTime.find(subject) == purchaseTime.end()) purchaseTime[subject] = real(gen);
-                            fos_purchase<<line<<". \n";
+                            fos_purchase<<line<<"\n";
                             //fos_purchase<<line<<"\t"<<purchaseTime[subject]<<". \n";
                         }else {
                             cout << line << " .\n";
@@ -897,7 +897,7 @@ void association_m_t::generate_stream_data (const namespace_map & n_map, type_ma
 
         boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
 
-        boost::random::mt19937 gen(time(0));
+        boost::random::mt19937 gen(static_cast<unsigned> (time(0)));
 
         for (unsigned int left_id=0; left_id<left_instance_count; left_id++){
             float pr = ((float) rand()) / ((float) RAND_MAX);
@@ -2570,7 +2570,7 @@ void process_stream_file(){
     fos_review.close();
 
     //sort the assoc_like files according to the attached random number
-    string cmd = "sort -n -k 4 2_assoc_like_stream.txt > 3_sorted_assoc_like_stream.txt";
+    string cmd = "sort -n -k 4 2_assoc_like_stream.txt > 4_like_stream.txt";
     char ls_cmd[50];
     sprintf(ls_cmd, cmd.c_str());
     system(ls_cmd);
@@ -2584,7 +2584,7 @@ void process_stream_file(){
     ifstream in_purchase("1_purchase_stream.txt");
     ofstream out_review ("3_review.txt");
     ofstream out_purchase ("3_purchase.txt");
-    boost::random::mt19937 gen(time(0));
+    boost::random::mt19937 gen(static_cast<unsigned> (time(0)));
 
     string curr_review = "";
     double curr_time = 0.0;
@@ -2655,6 +2655,36 @@ void process_stream_file(){
     out_review.close();
     out_purchase.close();
 
+    string cmd2 = "sort -s -t$'\\t' -n -k 4 3_purchase.txt > 3_purchase_temp.txt";
+    char ls_cmd2[50];
+    sprintf(ls_cmd2, cmd2.c_str());
+    system(ls_cmd2);
+
+    string cmd3 = "grep -v '^$' 3_purchase_temp.txt > 4_purchase.txt";
+    char ls_cmd3[50];
+    sprintf(ls_cmd3, cmd3.c_str());
+    system(ls_cmd3);
+
+    string cmd4 = "sort -s -t$'\\t' -n -k 4 3_review.txt > 3_review_temp.txt";
+    char ls_cmd4[50];
+    sprintf(ls_cmd4, cmd4.c_str());
+    system(ls_cmd4);
+
+    string cmd5 = "grep -v '^$' 3_review_temp.txt > 4_review.txt";
+    char ls_cmd5[50];
+    sprintf(ls_cmd5, cmd5.c_str());
+    system(ls_cmd5);
+
+    remove("1_assoc_stream.txt");
+    remove("2_assoc_like_stream.txt");
+    remove("1_review_stream.txt");
+    remove("1_purchase_stream.txt");
+    remove("2_assoc_review_purchase_stream.txt");
+    remove("3_purchase.txt");
+    remove("3_review.txt");
+    remove("3_purchase_temp.txt");
+    remove("3_review_temp.txt");
+
 };
 
 void test(){
@@ -2677,8 +2707,8 @@ void test(){
 
 /**
  * todo
- * 1. random value for purchase and review
- * 2. sort the purchase and review result
+ * done. 1. random value for purchase and review
+ * done 2. sort the purchase and review result
  * 3. decide the distribution model
  */
 int main(int argc, const char* argv[]) {
