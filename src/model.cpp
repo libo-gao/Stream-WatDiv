@@ -41,6 +41,10 @@ static unordered_map<string, double> purchaseTime;
 static unordered_map<pair<string, string>, string, hashfunc> reversePurchase;
 static unordered_map<string, pair<string, string>> review;
 static unordered_map<string, double> reviewTime;
+static unordered_map<string, vector<string>> offerRetailer;
+static unordered_map<string, vector<string>> offerCountry;
+static unordered_map<string, vector<string>> offerProduct;
+static unordered_map<string, vector<double>> offerTime;
 
 static boost::mt19937 BOOST_RND_GEN = boost::mt19937(static_cast<unsigned> (time(0)));
 static boost::normal_distribution<double> BOOST_NORMAL_DIST = boost::normal_distribution<double>(0.5, (0.5/3.0));
@@ -1439,7 +1443,7 @@ void query_template_m_t::instantiate (unsigned int query_count, unsigned int rec
             mapping_m_t * mapping = *itr;
             if (mapping->_distribution_type!=DISTRIBUTION_TYPES::DYNAMIC){
                 if (sample_map.find(mapping->_var_name)==sample_map.end()){
-                    sample_map.insert(pair<string, vector<string> >(mapping->_var_name, vector<string>()));
+                    sample_map.insert(pair<string, vector<string>>(mapping->_var_name, vector<string>()));
                 }
                 sample_map[mapping->_var_name].push_back(mapping->generate(*_mdl, *this));
             }
@@ -2201,11 +2205,12 @@ void model::generate_stream_data (int scale_factor){
     ofstream fos_assoc ("1_assoc_stream.txt");
     ofstream fos_review("1_review_stream.txt");
     ofstream fos_purchase("1_purchase_stream.txt");
+    ofstream fos_offer("1_offer_stream.txt");
     for (int i=0; i<scale_factor; i++){
         for (vector<resource_m_t*>::iterator itr2=_resource_array.begin(); itr2!=_resource_array.end(); itr2++){
             resource_m_t * resource = *itr2;
             if (i==0 || resource->_scalable){
-                resource->generate_stream_data(_namespace_map, _id_cursor_map, fos_review, fos_purchase);
+                resource->generate_stream_data(_namespace_map, _id_cursor_map, fos_review, fos_purchase, fos_offer);
             }
         }
     }
@@ -2244,7 +2249,7 @@ void model::generate_stream_data (int scale_factor){
 }
 
 
-void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase){
+void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase, ofstream &fos_offer){
     if (id_cursor_map.find(_type_prefix)==id_cursor_map.end()){
         id_cursor_map[_type_prefix] = 0;
     }
@@ -2280,6 +2285,8 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
                             boost::uniform_real<double> real(0, 1);
                             if(purchaseTime.find(subject) == purchaseTime.end()) purchaseTime[subject] = real(BOOST_RND_GEN);
                             fos_purchase<<line<<"\n";
+                        }else if(_type_prefix == "wsdbm:Offer"){
+                            fos_offer<<line<<"\n";
                         }else {
                             cout << line << " .\n";
                         }
@@ -2291,6 +2298,8 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
             fos_review<<'\n';
         }else if(_type_prefix == "wsdbm:Purchase"){
             fos_purchase<<'\n';
+        }else if(_type_prefix == "wsdbm:Offer"){
+            fos_offer<<'\n';
         }
     }
     id_cursor_map[_type_prefix] += _scaling_coefficient;
@@ -2386,6 +2395,37 @@ void association_m_t::generate_stream_data (const namespace_map & n_map, type_ma
                     }else{
                         purchase[subject_str].second = object_str;
                     }
+                    fos<<line<<"\t.\n";
+                }
+                else if(_predicate == "wsdbm:subscribes"){
+                    fos<<line;
+                    boost::uniform_real<double> real(0, 1);
+                    fos<<"\t"<<real(BOOST_RND_GEN)<<"\t.\n";
+                }
+                else if(_predicate == "gr:offers"){
+                    if(offerRetailer.find(object_str)==offerRetailer.end()){
+                        offerRetailer[object_str] = vector<string>();
+                    }
+                    offerRetailer[object_str].push_back(subject_str);
+                    if(offerTime.find(object_str)==offerTime.end()){
+                        offerTime[object_str] = vector<double>();
+                    }
+                    boost::uniform_real<double> real(0, 1);
+                    offerTime[object_str].push_back(real(BOOST_RND_GEN));
+                    fos<<line<<"\t.\n";
+                }
+                else if(_predicate == "gr:includes"){
+                    if(offerProduct.find(subject_str)==offerProduct.end()){
+                        offerProduct[subject_str] = vector<string>();
+                    }
+                    offerProduct[subject_str].push_back(object_str);
+                    fos<<line<<"\t.\n";
+                }
+                else if(_predicate == "sorg:eligibleRegion"){
+                    if(offerCountry.find(subject_str)==offerCountry.end()){
+                        offerCountry[subject_str] = vector<string>();
+                    }
+                    offerCountry[subject_str].push_back(object_str);
                     fos<<line<<"\t.\n";
                 }
                 else {
@@ -2502,6 +2542,11 @@ void association_m_t::process_stream_type_restrictions (const namespace_map & n_
                             }
                             fos<<line<<"\t.\n";
                         }
+                        else if(_predicate == "wsdbm:follows"){
+                            fos<<line;
+                            boost::uniform_real<double> real(0, 1);
+                            fos<<"\t"<<real(BOOST_RND_GEN)<<"\t.\n";
+                        }
                         else {
                             cout << line << "\t.\n";
                         }
@@ -2542,7 +2587,7 @@ void process_stream_file(){
     string line;
     while(getline(fin, line)){
         vector<string> items = split(line, '\t');
-        if(items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/likes>") {
+        if(items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/likes>"||items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/follows>"||items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/subscribes>") {
             string result="";
             size_t found = items[0].find('>');
             result.append(items[0].substr(1, found-1)+"\t");
@@ -2553,7 +2598,7 @@ void process_stream_file(){
             result.append(items[3]);
             fos_like<<result<<'\n';
         }
-        else {
+        else{
             string result="";
             size_t found = items[0].find('>');
             result.append(items[0].substr(1, found-1)+"\t");
@@ -2582,8 +2627,10 @@ void process_stream_file(){
 
     ifstream in_review ("1_review_stream.txt");
     ifstream in_purchase("1_purchase_stream.txt");
+    ifstream in_offer("1_offer_stream.txt");
     ofstream out_review ("3_review.txt");
     ofstream out_purchase ("3_purchase.txt");
+    ofstream out_offer("3_offer.txt");
     //boost::random::mt19937 gen(static_cast<unsigned> (time(0)));
 
     string curr_review = "";
@@ -2591,7 +2638,7 @@ void process_stream_file(){
     bool getTime = true;
     bool skip = false;
     while(getline(in_review, line)){
-        if (!line.size()) {
+        if (line.size()==0) {
             if(getTime) continue;
             string review1 = removeBracket(curr_review) +"\t"+ "rev:reviewer"+"\t"+removeBracket(review[curr_review].first) + "\t" + to_string(curr_time);
             string review2 = removeBracket(review[curr_review].second) + "\t" + "rev:hasReview" + "\t" + removeBracket(curr_review) + "\t" + to_string(curr_time);
@@ -2650,10 +2697,49 @@ void process_stream_file(){
         out_purchase<<result<<'\n';
     }
 
+    curr_time = 0.0;
+    string curr_offer = "";
+    vector<string> cache;
+    while(getline(in_offer, line)){
+        if(!line.size()){
+            for(int i = 0; i<offerRetailer[curr_offer].size(); i++){
+                curr_time = offerTime[curr_offer][i];
+                for(auto item: cache){
+                    item.append(to_string(curr_time));
+                    out_offer<<item<<'\n';
+                }
+                string assoc1 = offerRetailer[curr_offer][i] + '\t' + "http://purl.org/goodrelations/offers" + '\t' + curr_offer + '\t' + to_string(curr_time);
+                out_offer<<assoc1<<'\n';
+                string assoc2 = curr_offer + '\t' + "http://purl.org/goodrelations/includes" + '\t' + offerProduct[curr_offer][0] + '\t' + to_string(curr_time);
+                out_offer<<assoc2<<'\n';
+                string assoc3;
+                for(auto country:offerCountry[curr_offer]){
+                    assoc3 = curr_offer + '\t' + "http://schema.org/eligibleRegion" + '\t' + country + '\t' + to_string(curr_time);
+                    out_offer<<assoc3<<'\n';
+                }
+                out_offer<<'\n';
+            }
+            cache.clear();
+            continue;
+        }
+        vector<string> items = split(line, '\t');
+        curr_offer = items[0];
+        string result="";
+        size_t found = items[0].find('>');
+        result.append(items[0].substr(1, found-1)+"\t");
+        found = items[1].find('>');
+        result.append(items[1].substr(1, found-1)+"\t");
+        result.append(items[2]+"\t");
+        cache.push_back(result);
+    }
+
+
     in_review.close();
     in_purchase.close();
+    in_offer.close();
     out_review.close();
     out_purchase.close();
+    out_offer.close();
 
     string cmd2 = "sort -s -t$'\\t' -n -k 4 3_purchase.txt > 3_purchase_temp.txt";
     char ls_cmd2[50];
@@ -2675,6 +2761,19 @@ void process_stream_file(){
     sprintf(ls_cmd5, cmd5.c_str());
     system(ls_cmd5);
 
+    string cmd6 = "sort -s -t$'\\t' -n -k 4 3_offer.txt > 3_offer_temp.txt";
+    char ls_cmd6[50];
+    sprintf(ls_cmd6, cmd6.c_str());
+    system(ls_cmd6);
+
+    string cmd7 = "grep -v '^$' 3_offer_temp.txt > offer.txt";
+    char ls_cmd7[50];
+    sprintf(ls_cmd7, cmd7.c_str());
+    system(ls_cmd7);
+
+    remove("1_offer_stream.txt");
+    remove("3_offer.txt");
+    remove("3_offer_temp.txt");
     remove("1_assoc_stream.txt");
     remove("2_assoc_like_stream.txt");
     remove("1_review_stream.txt");
@@ -2706,6 +2805,7 @@ int main(int argc, const char* argv[]) {
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
             cur_model.generate_stream_data(scale_factor);
             cur_model.save("saved.txt");
+
             process_stream_file();
             dictionary::destroy_instance();
             return 0;
