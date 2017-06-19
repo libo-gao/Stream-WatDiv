@@ -1,4 +1,4 @@
-#include "statistics.h"
+#include "../include/statistics.h"
 
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
