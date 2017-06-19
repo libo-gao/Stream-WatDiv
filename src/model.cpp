@@ -2640,8 +2640,8 @@ void process_stream_file(){
     while(getline(in_review, line)){
         if (line.size()==0) {
             if(getTime) continue;
-            string review1 = removeBracket(curr_review) +"\t"+ "rev:reviewer"+"\t"+removeBracket(review[curr_review].first) + "\t" + to_string(curr_time);
-            string review2 = removeBracket(review[curr_review].second) + "\t" + "rev:hasReview" + "\t" + removeBracket(curr_review) + "\t" + to_string(curr_time);
+            string review1 = removeBracket(curr_review) +"\t"+ "http://purl.org/stuff/rev#reviewer"+"\t"+removeBracket(review[curr_review].first) + "\t" + to_string(curr_time);
+            string review2 = removeBracket(review[curr_review].second) + "\t" + "http://purl.org/stuff/rev#hasReview" + "\t" + removeBracket(curr_review) + "\t" + to_string(curr_time);
             out_review<<review1<<"\n"<<review2<<"\n"<<"\n";
             getTime = true;
             continue;
@@ -2675,8 +2675,8 @@ void process_stream_file(){
     getTime = true;
     while(getline(in_purchase, line)){
         if(!line.size()){
-            string purchase1 = removeBracket(purchase[curr_purchase].first) + "\t" + "wsdbm:makesPurchase" + "\t" + removeBracket(curr_purchase)+"\t"+to_string(curr_time);
-            string purchase2 = removeBracket(curr_purchase) + "\t" + "wsdbm:purchaseFor" + "\t" + removeBracket(purchase[curr_purchase].second)+"\t"+to_string(curr_time);
+            string purchase1 = removeBracket(purchase[curr_purchase].first) + "\t" + "http://db.uwaterloo.ca/~galuc/wsdbm/makesPurchase" + "\t" + removeBracket(curr_purchase)+"\t"+to_string(curr_time);
+            string purchase2 = removeBracket(curr_purchase) + "\t" + "http://db.uwaterloo.ca/~galuc/wsdbm/purchaseFor" + "\t" + removeBracket(purchase[curr_purchase].second)+"\t"+to_string(curr_time);
             out_purchase<<purchase1<<'\n'<<purchase2<<'\n'<<'\n';
             getTime = true;
             continue;
@@ -2784,6 +2784,7 @@ void process_stream_file(){
     remove("3_purchase_temp.txt");
     remove("3_review_temp.txt");
 
+
 };
 
 /**
@@ -2805,7 +2806,6 @@ int main(int argc, const char* argv[]) {
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
             cur_model.generate_stream_data(scale_factor);
             cur_model.save("saved.txt");
-
             process_stream_file();
             dictionary::destroy_instance();
             return 0;
