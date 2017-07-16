@@ -2907,6 +2907,7 @@ int main(int argc, const char* argv[]) {
         }
     }
     cout<<"Usage:::\t./watdiv -sd <model-file> <scale-factor>"<<"\n";
+    cout<<"Usage:::\t./watdiv -sq <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?>\"<<\"\\n";
     cout<<"Usage:::\t./watdiv -d <model-file> <scale-factor>"<<"\n";
     cout<<"Usage:::\t./watdiv -q <model-file> <query-count> <recurrence-factor>"<<"\n";
     cout<<"        \t./watdiv -q <model-file> <query-file> <query-count> <recurrence-factor>"<<"\n";
