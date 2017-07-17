@@ -2200,17 +2200,26 @@ void model::save (const char * filename) const{
  * ----------------------------
  */
 
-void model::generate_stream_data (int scale_factor){
+void model::generate_stream_data (int static_scale_factor, int stream_scale_factor){
     boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
     ofstream fos_assoc ("1_assoc_stream.txt");
     ofstream fos_review("1_review_stream.txt");
     ofstream fos_purchase("1_purchase_stream.txt");
     ofstream fos_offer("1_offer_stream.txt");
-    for (int i=0; i<scale_factor; i++){
-        for (vector<resource_m_t*>::iterator itr2=_resource_array.begin(); itr2!=_resource_array.end(); itr2++){
-            resource_m_t * resource = *itr2;
+    for (int i=0; i<stream_scale_factor; i++){
+        for (vector<resource_m_t*>::iterator itr1=_resource_array.begin(); itr1!=_resource_array.end(); itr1++){
+            resource_m_t * resource = *itr1;
             if (i==0 || resource->_scalable){
-                resource->generate_stream_data(_namespace_map, _id_cursor_map, fos_review, fos_purchase, fos_offer);
+                resource->generate_stream_data(_namespace_map, _id_cursor_map, fos_review, fos_purchase, fos_offer, true);
+            }
+        }
+    }
+
+    for (int i = 0; i<static_scale_factor; i++){
+        for(vector<resource_m_t*>::iterator itr1=_resource_array.begin(); itr1!=_resource_array.end(); itr1++){
+            resource_m_t *resource = *itr1;
+            if (i==0 || resource->_scalable){
+                resource->generate_stream_data(_namespace_map, _id_cursor_map, fos_review, fos_purchase, fos_offer, false);
             }
         }
     }
@@ -2219,7 +2228,7 @@ void model::generate_stream_data (int scale_factor){
 
     for (vector<association_m_t*>::iterator itr1=_association_array.begin(); itr1!=_association_array.end(); itr1++){
         association_m_t * association = *itr1;
-        association->generate_stream_data(_namespace_map, _type_map, _id_cursor_map, fos_assoc);
+        association->generate_stream_data(_namespace_map, _type_map, _id_cursor_map, fos_assoc, false);
     }
 
     boost::posix_time::ptime t3 (bpt::microsec_clock::universal_time());
@@ -2249,7 +2258,7 @@ void model::generate_stream_data (int scale_factor){
 }
 
 
-void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase, ofstream &fos_offer){
+void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase, ofstream &fos_offer, bool isStream){
     if (id_cursor_map.find(_type_prefix)==id_cursor_map.end()){
         id_cursor_map[_type_prefix] = 0;
     }
@@ -2279,14 +2288,17 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
                         int tab2_index = triple_str.find("\t", tab1_index+1);
 
                         triple_st line (triple_str.substr(0, tab1_index), triple_str.substr((tab1_index+1), (tab2_index-tab1_index-1)), triple_str.substr(tab2_index+1));
-                        if(_type_prefix == "wsdbm:Review"){
-                            fos_review<<line<<"\n";
-                        }else if(_type_prefix == "wsdbm:Purchase"){
-                            boost::uniform_real<double> real(0, 1);
-                            if(purchaseTime.find(subject) == purchaseTime.end()) purchaseTime[subject] = real(BOOST_RND_GEN);
-                            fos_purchase<<line<<"\n";
-                        }else if(_type_prefix == "wsdbm:Offer"){
-                            fos_offer<<line<<"\n";
+                        if(isStream) {
+                            if (_type_prefix == "wsdbm:Review") {
+                                fos_review << line << "\n";
+                            } else if (_type_prefix == "wsdbm:Purchase") {
+                                boost::uniform_real<double> real(0, 1);
+                                if (purchaseTime.find(subject) == purchaseTime.end())
+                                    purchaseTime[subject] = real(BOOST_RND_GEN);
+                                fos_purchase << line << "\n";
+                            } else if (_type_prefix == "wsdbm:Offer") {
+                                fos_offer << line << "\n";
+                            }
                         }else {
                             cout << line << " .\n";
                         }
@@ -2294,18 +2306,20 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
                 }
             }
         }
-        if(_type_prefix == "wsdbm:Review"){
-            fos_review<<'\n';
-        }else if(_type_prefix == "wsdbm:Purchase"){
-            fos_purchase<<'\n';
-        }else if(_type_prefix == "wsdbm:Offer"){
-            fos_offer<<'\n';
+        if(isStream) {
+            if (_type_prefix == "wsdbm:Review") {
+                fos_review << '\n';
+            } else if (_type_prefix == "wsdbm:Purchase") {
+                fos_purchase << '\n';
+            } else if (_type_prefix == "wsdbm:Offer") {
+                fos_offer << '\n';
+            }
         }
     }
     id_cursor_map[_type_prefix] += _scaling_coefficient;
 }
 
-void association_m_t::generate_stream_data (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos){
+void association_m_t::generate_stream_data (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos, bool isStream){
     if (id_cursor_map.find(_subject_type)==id_cursor_map.end()){
         cerr<<"[association_m_t::parse()] Error: association cannot be defined over undefined resource '"<<_subject_type<<"'..."<<"\n";
         exit(0);
@@ -2801,7 +2815,17 @@ int main(int argc, const char* argv[]) {
         const char * model_filename = argv[2];
         model cur_model (model_filename);
         //statistics stat (cur_model);
-        //./watdiv -sd ../../model/wsdbm-data-model.txt 1 > static_rdf.txt
+        //./watdiv -sd ../../model/wsdbm-data-model.txt 1 1 > static_rdf.txt
+        // first '1' is static scale factor, second '1' is streaming scale factor
+        if(argc==5 && argv[1][0]=='-' && argv[1][1]=='s' && argv[1][2]=='d'){
+            unsigned int static_scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
+            unsigned int stream_scale_factor = boost::lexical_cast<unsigned int>(string(argv[4]));
+            cur_model.generate_stream_data(static_scale_factor, stream_scale_factor);
+            cur_model.save("saved.txt");
+            process_stream_file();
+            dictionary::destroy_instance();
+            return 0;
+/*
         if(argc==4 && argv[1][0]=='-' && argv[1][1]=='s' && argv[1][2]=='d'){
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
             cur_model.generate_stream_data(scale_factor);
@@ -2809,6 +2833,7 @@ int main(int argc, const char* argv[]) {
             process_stream_file();
             dictionary::destroy_instance();
             return 0;
+*/
         }else if (argc==4 && argv[1][0]=='-' && argv[1][1]=='d'){
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
             cur_model.generate(scale_factor);
