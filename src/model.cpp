@@ -2773,7 +2773,7 @@ void process_stream_file(){
     sprintf(ls_cmd3, cmd3.c_str());
     system(ls_cmd3);
 
-    string cmd4 = "sort -s -t$'\t' -n -k 4 3_review.txt > 3_review_temp.txt";
+    string cmd4 = "sort -s -t '\t' -n -k 4 3_review.txt > 3_review_temp.txt";
     char ls_cmd4[100];
     sprintf(ls_cmd4, cmd4.c_str());
     system(ls_cmd4);
@@ -2783,7 +2783,7 @@ void process_stream_file(){
     sprintf(ls_cmd5, cmd5.c_str());
     system(ls_cmd5);
 
-    string cmd6 = "sort -s -t$'\t' -n -k 4 3_offer.txt > 3_offer_temp.txt";
+    string cmd6 = "sort -s -t '\t' -n -k 4 3_offer.txt > 3_offer_temp.txt";
     char ls_cmd6[100];
     sprintf(ls_cmd6, cmd6.c_str());
     system(ls_cmd6);
