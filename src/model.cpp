@@ -2206,20 +2206,18 @@ void model::generate_stream_data (int static_scale_factor, int stream_scale_fact
     ofstream fos_review("1_review_stream.txt");
     ofstream fos_purchase("1_purchase_stream.txt");
     ofstream fos_offer("1_offer_stream.txt");
-    for (int i=0; i<stream_scale_factor; i++){
-        for (vector<resource_m_t*>::iterator itr1=_resource_array.begin(); itr1!=_resource_array.end(); itr1++){
-            resource_m_t * resource = *itr1;
-            if (i==0 || resource->_scalable){
-                resource->generate_stream_data(_namespace_map, _id_cursor_map, fos_review, fos_purchase, fos_offer, true);
-            }
+    cout<<"start:"<<endl;
+    for (vector<resource_m_t*>::iterator itr1=_resource_array.begin(); itr1!=_resource_array.end(); itr1++){
+        resource_m_t * resource = *itr1;
+        int loop = 1;
+        if(resource->_type_prefix=="wsdbm:Review"||resource->_type_prefix=="wsdbm:Purchase"||resource->_type_prefix=="wsdbm:Offer"){
+            loop = stream_scale_factor;
+        }else{
+            loop = static_scale_factor;
         }
-    }
-
-    for (int i = 0; i<static_scale_factor; i++){
-        for(vector<resource_m_t*>::iterator itr1=_resource_array.begin(); itr1!=_resource_array.end(); itr1++){
-            resource_m_t *resource = *itr1;
+        for(int i = 0; i<loop; i++){
             if (i==0 || resource->_scalable){
-                resource->generate_stream_data(_namespace_map, _id_cursor_map, fos_review, fos_purchase, fos_offer, false);
+                resource->generate_stream_data(_namespace_map, _id_cursor_map, fos_review, fos_purchase, fos_offer);
             }
         }
     }
@@ -2228,7 +2226,13 @@ void model::generate_stream_data (int static_scale_factor, int stream_scale_fact
 
     for (vector<association_m_t*>::iterator itr1=_association_array.begin(); itr1!=_association_array.end(); itr1++){
         association_m_t * association = *itr1;
-        association->generate_stream_data(_namespace_map, _type_map, _id_cursor_map, fos_assoc, false);
+        int loop = 1;
+        if(association->_predicate=="gr:offers"||association->_predicate=="rev:hasReview"||association->_predicate=="wsdbm:subscribes"||association->_predicate=="wsdbm:likes"){
+            loop = stream_scale_factor;
+        }
+        for(int i = 0; i<loop; i++){
+            association->generate_stream_data(_namespace_map, _type_map, _id_cursor_map, fos_assoc);
+        }
     }
 
     boost::posix_time::ptime t3 (bpt::microsec_clock::universal_time());
@@ -2242,7 +2246,13 @@ void model::generate_stream_data (int static_scale_factor, int stream_scale_fact
 
     for (vector<association_m_t*>::iterator itr1=_association_array.begin(); itr1!=_association_array.end(); itr1++){
         association_m_t * association = *itr1;
-        association->process_stream_type_restrictions(_namespace_map, _type_map, _id_cursor_map, fos_assoc);
+        int loop = 1;
+        if(association->_predicate=="wsdbm:makesPurchase"||association->_predicate=="wsdbm:follows"){
+            loop = stream_scale_factor;
+        }
+        for(int i = 0; i<loop; i++){
+            association->process_stream_type_restrictions(_namespace_map, _type_map, _id_cursor_map, fos_assoc);
+        }
     }
 
     boost::posix_time::ptime t5 (bpt::microsec_clock::universal_time());
@@ -2258,7 +2268,7 @@ void model::generate_stream_data (int static_scale_factor, int stream_scale_fact
 }
 
 
-void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase, ofstream &fos_offer, bool isStream){
+void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string, unsigned int> & id_cursor_map, ofstream &fos_review, ofstream &fos_purchase, ofstream &fos_offer){
     if (id_cursor_map.find(_type_prefix)==id_cursor_map.end()){
         id_cursor_map[_type_prefix] = 0;
     }
@@ -2288,38 +2298,34 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
                         int tab2_index = triple_str.find("\t", tab1_index+1);
 
                         triple_st line (triple_str.substr(0, tab1_index), triple_str.substr((tab1_index+1), (tab2_index-tab1_index-1)), triple_str.substr(tab2_index+1));
-                        if(isStream) {
-                            if (_type_prefix == "wsdbm:Review") {
-                                fos_review << line << "\n";
-                            } else if (_type_prefix == "wsdbm:Purchase") {
-                                boost::uniform_real<double> real(0, 1);
-                                if (purchaseTime.find(subject) == purchaseTime.end())
-                                    purchaseTime[subject] = real(BOOST_RND_GEN);
+                        if (_type_prefix == "wsdbm:Review") {
+                            fos_review << line << "\n";
+                        } else if (_type_prefix == "wsdbm:Purchase") {
+                            boost::uniform_real<double> real(0, 1);
+                            if (purchaseTime.find(subject) == purchaseTime.end())
+                                purchaseTime[subject] = real(BOOST_RND_GEN);
                                 fos_purchase << line << "\n";
-                            } else if (_type_prefix == "wsdbm:Offer") {
+                        } else if (_type_prefix == "wsdbm:Offer") {
                                 fos_offer << line << "\n";
-                            }
-                        }else {
+                        } else {
                             cout << line << " .\n";
                         }
                     }
                 }
             }
         }
-        if(isStream) {
-            if (_type_prefix == "wsdbm:Review") {
-                fos_review << '\n';
-            } else if (_type_prefix == "wsdbm:Purchase") {
-                fos_purchase << '\n';
-            } else if (_type_prefix == "wsdbm:Offer") {
-                fos_offer << '\n';
-            }
+        if (_type_prefix == "wsdbm:Review") {
+            fos_review << '\n';
+        } else if (_type_prefix == "wsdbm:Purchase") {
+            fos_purchase << '\n';
+        } else if (_type_prefix == "wsdbm:Offer") {
+            fos_offer << '\n';
         }
     }
     id_cursor_map[_type_prefix] += _scaling_coefficient;
 }
 
-void association_m_t::generate_stream_data (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos, bool isStream){
+void association_m_t::generate_stream_data (const namespace_map & n_map, type_map & t_map, const map<string, unsigned int> & id_cursor_map, ofstream &fos){
     if (id_cursor_map.find(_subject_type)==id_cursor_map.end()){
         cerr<<"[association_m_t::parse()] Error: association cannot be defined over undefined resource '"<<_subject_type<<"'..."<<"\n";
         exit(0);
@@ -2565,8 +2571,9 @@ void association_m_t::process_stream_type_restrictions (const namespace_map & n_
                             cout << line << "\t.\n";
                         }
                     }else{
-                        if(_predicate == "wsdbm:makesPurchase")
-                            cout<<"cannot generate more purchase"<<endl;
+                        if(_predicate == "wsdbm:makesPurchase"){
+                            //cout<<"cannot generate more purchase"<<endl;
+                        }
                     }
                 }
             }
@@ -2630,7 +2637,7 @@ void process_stream_file(){
 
     //sort the assoc_like files according to the attached random number
     string cmd = "sort -n -k 4 2_assoc_like_stream.txt > like_stream.txt";
-    char ls_cmd[50];
+    char ls_cmd[100];
     sprintf(ls_cmd, cmd.c_str());
     system(ls_cmd);
 
@@ -2756,32 +2763,32 @@ void process_stream_file(){
     out_offer.close();
 
     string cmd2 = "sort -s -t$'\\t' -n -k 4 3_purchase.txt > 3_purchase_temp.txt";
-    char ls_cmd2[50];
+    char ls_cmd2[100];
     sprintf(ls_cmd2, cmd2.c_str());
     system(ls_cmd2);
 
     string cmd3 = "grep -v '^$' 3_purchase_temp.txt > purchase.txt";
-    char ls_cmd3[50];
+    char ls_cmd3[100];
     sprintf(ls_cmd3, cmd3.c_str());
     system(ls_cmd3);
 
     string cmd4 = "sort -s -t$'\\t' -n -k 4 3_review.txt > 3_review_temp.txt";
-    char ls_cmd4[50];
+    char ls_cmd4[100];
     sprintf(ls_cmd4, cmd4.c_str());
     system(ls_cmd4);
 
     string cmd5 = "grep -v '^$' 3_review_temp.txt > review.txt";
-    char ls_cmd5[50];
+    char ls_cmd5[100];
     sprintf(ls_cmd5, cmd5.c_str());
     system(ls_cmd5);
 
     string cmd6 = "sort -s -t$'\\t' -n -k 4 3_offer.txt > 3_offer_temp.txt";
-    char ls_cmd6[50];
+    char ls_cmd6[100];
     sprintf(ls_cmd6, cmd6.c_str());
     system(ls_cmd6);
 
     string cmd7 = "grep -v '^$' 3_offer_temp.txt > offer.txt";
-    char ls_cmd7[50];
+    char ls_cmd7[100];
     sprintf(ls_cmd7, cmd7.c_str());
     system(ls_cmd7);
 
@@ -2797,7 +2804,6 @@ void process_stream_file(){
     remove("3_review.txt");
     remove("3_purchase_temp.txt");
     remove("3_review_temp.txt");
-
 
 };
 
