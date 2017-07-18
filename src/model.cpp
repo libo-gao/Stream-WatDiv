@@ -2762,11 +2762,12 @@ void process_stream_file(){
     out_purchase.close();
     out_offer.close();
 
-    string cmd2 = "sort -s -t$'\t' -n -k 4 3_purchase.txt > 3_purchase_temp.txt";
+    string cmd2 = "sort -s -t '\t' -n -k 4 3_purchase.txt > 3_purchase_temp.txt";
     char ls_cmd2[100];
     sprintf(ls_cmd2, cmd2.c_str());
     system(ls_cmd2);
 
+    //'^$' will match an empty line
     string cmd3 = "grep -v '^$' 3_purchase_temp.txt > purchase.txt";
     char ls_cmd3[100];
     sprintf(ls_cmd3, cmd3.c_str());
