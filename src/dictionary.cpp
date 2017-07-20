@@ -38,9 +38,10 @@ void dictionary::init (const char * words_filename, const char * firstnames_file
         ifstream fis;
         switch (i){
             case 0:{
-                //change it when there's no unix word file under /usr/share/dict
-                fis.open(firstnames_filename);
-                //fis.open(words_filename);
+                fis.open(words_filename);
+                if(!fis){ //if there is no unix word file
+                    fis.open(firstnames_filename);
+                }
                 break;
             }
             case 1:{
