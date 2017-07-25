@@ -2619,6 +2619,7 @@ void output_stream_file(){
             fos_stream<<result<<'\n';
         }
         else{
+
         }
     }
 
@@ -2743,7 +2744,7 @@ void output_stream_file(){
     in_offer.close();
     fos_stream.close();
 
-    string cmd2 = "sort -s -t '\t' -g -k 4 stream_data.txt > stream_data_temp.txt";
+    string cmd2 = "sort -s -t '\t' -g -k 4 -T ./ stream_data.txt > stream_data_temp.txt";
     char ls_cmd2[100];
     sprintf(ls_cmd2, cmd2.c_str());
     system(ls_cmd2);
