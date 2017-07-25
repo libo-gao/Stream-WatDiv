@@ -2600,6 +2600,167 @@ string removeBracket(string ss){
     return ss.substr(1, found-1);
 }
 
+void output_stream_file(){
+    ifstream fin ("1_assoc_stream.txt");
+    ofstream fos_stream("stream_data.txt");
+
+    string line;
+    while(getline(fin, line)){
+        vector<string> items = split(line, '\t');
+        if(items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/likes>"||items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/follows>"||items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/subscribes>") {
+            string result="";
+            size_t found = items[0].find('>');
+            result.append(items[0].substr(1, found-1)+"\t");
+            found = items[1].find('>');
+            result.append(items[1].substr(1, found-1)+"\t");
+            found = items[2].find('>');
+            result.append(items[2].substr(1, found-1)+"\t");
+            result.append(items[3]);
+            fos_stream<<result<<'\n';
+        }
+        else{
+        }
+    }
+
+    fin.close();
+
+    //build the reviewPurchase
+    for(auto it = purchase.begin();it!=purchase.end();it++){
+        reversePurchase[it->second] = it->first;
+    }
+
+    ifstream in_review ("1_review_stream.txt");
+    ifstream in_purchase("1_purchase_stream.txt");
+    ifstream in_offer("1_offer_stream.txt");
+//    ofstream out_review ("3_review.txt");
+//    ofstream out_purchase ("3_purchase.txt");
+//    ofstream out_offer("3_offer.txt");
+    //boost::random::mt19937 gen(static_cast<unsigned> (time(0)));
+
+    string curr_review = "";
+    double curr_time = 0.0;
+    bool getTime = true;
+    bool skip = false;
+    while(getline(in_review, line)){
+        if (line.size()==0) {
+            if(getTime) continue;
+            string review1 = removeBracket(curr_review) +"\t"+ "http://purl.org/stuff/rev#reviewer"+"\t"+removeBracket(review[curr_review].first) + "\t" + to_string(curr_time);
+            string review2 = removeBracket(review[curr_review].second) + "\t" + "http://purl.org/stuff/rev#hasReview" + "\t" + removeBracket(curr_review) + "\t" + to_string(curr_time);
+            fos_stream<<review1<<"\n"<<review2<<"\n"<<"\n";
+            getTime = true;
+            continue;
+        }
+        vector<string> items = split(line, '\t');
+        if(getTime){
+            if(reversePurchase.find(review[items[0]])==reversePurchase.end()){
+                boost::uniform_real<double> real(0, 1);
+                curr_time = real(BOOST_RND_GEN);
+            }
+            else
+                curr_time = purchaseTime[reversePurchase[review[items[0]]]];
+            curr_review = items[0];
+            if(review[curr_review].first.size()==0||review[curr_review].second.size()==0){skip = true; continue;}
+            else skip = false;
+            getTime = false;
+        }
+        if(skip) continue;
+        string result="";
+        size_t found = items[0].find('>');
+        result.append(items[0].substr(1, found-1)+"\t");
+        found = items[1].find('>');
+        result.append(items[1].substr(1, found-1)+"\t");
+        result.append(items[2]+"\t");
+        result.append(to_string(curr_time));
+        fos_stream<<result<<"\n";
+    }
+
+    curr_time = 0.0;
+    string curr_purchase = "";
+    getTime = true;
+    while(getline(in_purchase, line)){
+        if(!line.size()){
+            string purchase1 = removeBracket(purchase[curr_purchase].first) + "\t" + "http://db.uwaterloo.ca/~galuc/wsdbm/makesPurchase" + "\t" + removeBracket(curr_purchase)+"\t"+to_string(curr_time);
+            string purchase2 = removeBracket(curr_purchase) + "\t" + "http://db.uwaterloo.ca/~galuc/wsdbm/purchaseFor" + "\t" + removeBracket(purchase[curr_purchase].second)+"\t"+to_string(curr_time);
+            fos_stream<<purchase1<<'\n'<<purchase2<<'\n'<<'\n';
+            getTime = true;
+            continue;
+        }
+        vector<string> items = split(line, '\t');
+        if(getTime){
+            curr_time = purchaseTime[items[0]];
+            getTime = false;
+        }
+        curr_purchase = items[0];
+        string result="";
+        size_t found = items[0].find('>');
+        result.append(items[0].substr(1, found-1)+"\t");
+        found = items[1].find('>');
+        result.append(items[1].substr(1, found-1)+"\t");
+        result.append(items[2]+"\t");
+        result.append(to_string(purchaseTime[items[0]]));
+        fos_stream<<result<<'\n';
+    }
+
+    curr_time = 0.0;
+    string curr_offer = "";
+    vector<string> cache;
+    while(getline(in_offer, line)){
+        if(!line.size()){
+            for(int i = 0; i<offerRetailer[curr_offer].size(); i++){
+                curr_time = offerTime[curr_offer][i];
+                for(auto item: cache){
+                    item.append(to_string(curr_time));
+                    fos_stream<<item<<'\n';
+                }
+                string assoc1 = offerRetailer[curr_offer][i] + '\t' + "http://purl.org/goodrelations/offers" + '\t' + curr_offer + '\t' + to_string(curr_time);
+                fos_stream<<assoc1<<'\n';
+                string assoc2 = curr_offer + '\t' + "http://purl.org/goodrelations/includes" + '\t' + offerProduct[curr_offer][0] + '\t' + to_string(curr_time);
+                fos_stream<<assoc2<<'\n';
+                string assoc3;
+                for(auto country:offerCountry[curr_offer]){
+                    assoc3 = curr_offer + '\t' + "http://schema.org/eligibleRegion" + '\t' + country + '\t' + to_string(curr_time);
+                    fos_stream<<assoc3<<'\n';
+                }
+                fos_stream<<'\n';
+            }
+            cache.clear();
+            continue;
+        }
+        vector<string> items = split(line, '\t');
+        curr_offer = items[0];
+        string result="";
+        size_t found = items[0].find('>');
+        result.append(items[0].substr(1, found-1)+"\t");
+        found = items[1].find('>');
+        result.append(items[1].substr(1, found-1)+"\t");
+        result.append(items[2]+"\t");
+        cache.push_back(result);
+    }
+
+
+    in_review.close();
+    in_purchase.close();
+    in_offer.close();
+    fos_stream.close();
+
+    string cmd2 = "sort -s -t '\t' -g -k 4 stream_data.txt > stream_data_temp.txt";
+    char ls_cmd2[100];
+    sprintf(ls_cmd2, cmd2.c_str());
+    system(ls_cmd2);
+
+    //'^$' will match an empty line
+    string cmd3 = "grep -v '^$' stream_data_temp.txt > stream.txt";
+    char ls_cmd3[100];
+    sprintf(ls_cmd3, cmd3.c_str());
+    system(ls_cmd3);
+
+    remove("1_offer_stream.txt");
+    remove("1_assoc_stream.txt");
+    remove("1_review_stream.txt");
+    remove("1_purchase_stream.txt");
+};
+
+
 void process_stream_file(){
     ifstream fin ("1_assoc_stream.txt");
     ofstream fos_review("2_assoc_review_purchase_stream.txt");
@@ -2829,7 +2990,8 @@ int main(int argc, const char* argv[]) {
             unsigned int stream_scale_factor = boost::lexical_cast<unsigned int>(string(argv[4]));
             cur_model.generate_stream_data(static_scale_factor, stream_scale_factor);
             cur_model.save("saved.txt");
-            process_stream_file();
+            output_stream_file();
+            //process_stream_file();
             dictionary::destroy_instance();
             return 0;
 /*
