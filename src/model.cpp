@@ -2891,13 +2891,13 @@ void process_stream_file(){
                     item.append(to_string(curr_time));
                     out_offer<<item<<'\n';
                 }
-                string assoc1 = offerRetailer[curr_offer][i] + '\t' + "http://purl.org/goodrelations/offers" + '\t' + curr_offer + '\t' + to_string(curr_time);
+                string assoc1 = removeBracket(offerRetailer[curr_offer][i]) + '\t' + "http://purl.org/goodrelations/offers" + '\t' + removeBracket(curr_offer) + '\t' + to_string(curr_time);
                 out_offer<<assoc1<<'\n';
-                string assoc2 = curr_offer + '\t' + "http://purl.org/goodrelations/includes" + '\t' + offerProduct[curr_offer][0] + '\t' + to_string(curr_time);
+                string assoc2 = removeBracket(curr_offer) + '\t' + "http://purl.org/goodrelations/includes" + '\t' + removeBracket(offerProduct[curr_offer][0]) + '\t' + to_string(curr_time);
                 out_offer<<assoc2<<'\n';
                 string assoc3;
                 for(auto country:offerCountry[curr_offer]){
-                    assoc3 = curr_offer + '\t' + "http://schema.org/eligibleRegion" + '\t' + country + '\t' + to_string(curr_time);
+                    assoc3 = removeBracket(curr_offer) + '\t' + "http://schema.org/eligibleRegion" + '\t' + removeBracket(country) + '\t' + to_string(curr_time);
                     out_offer<<assoc3<<'\n';
                 }
                 out_offer<<'\n';
