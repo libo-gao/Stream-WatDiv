@@ -2206,7 +2206,6 @@ void model::generate_stream_data (int static_scale_factor, int stream_scale_fact
     ofstream fos_review("1_review_stream.txt");
     ofstream fos_purchase("1_purchase_stream.txt");
     ofstream fos_offer("1_offer_stream.txt");
-    cout<<"start:"<<endl;
     for (vector<resource_m_t*>::iterator itr1=_resource_array.begin(); itr1!=_resource_array.end(); itr1++){
         resource_m_t * resource = *itr1;
         int loop = 1;
