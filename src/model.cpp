@@ -2762,6 +2762,62 @@ void output_stream_file(){
     remove("stream_data_temp.txt");
 };
 
+string sumAB(string a, int b){
+    string result = "";
+    string interval = to_string(b);
+    int lena = a.size()-1, lenb = interval.size()-1;
+    int carry = 0, op1 = 0, op2 = 0;
+    int mid = 0;
+    while(1){
+        if(lena<0&&lenb<0) break;
+        op1 = 0;
+        op2 = 0;
+        if(lena>=0){
+            op1 = a[lena] - '0';
+            lena--;
+        }
+        if(lenb>=0){
+            op2 = interval[lenb] - '0';
+            lenb--;
+        }
+        mid = op1 + op2 + carry;
+        carry = mid/10;
+        mid = mid%10;
+        result.insert(result.begin(), mid+'0');
+    }
+    if(carry!=0) result.insert(result.begin(), carry+'0');
+    return result;
+}
+
+void attach_timestamp(string src, string dst, int interval){
+    ifstream fin (src);
+    ofstream fos_stream(dst);
+
+    string line;
+    string last_sig = "";
+    string last_time = "0";
+    while(getline(fin, line)){
+        if(line.size()==0) continue;
+        vector<string> items = split(line, '\t');
+        string result="";
+        result.append(items[0]+"\t");
+        result.append(items[1]+"\t");
+        result.append(items[2]+"\t");
+
+        string curr_sig = items[3];
+        if(last_sig!=curr_sig){
+            last_sig = curr_sig;
+            last_time = sumAB(last_time, interval);
+        }
+        result.append(last_time);
+
+        fos_stream<<result<<'\n';
+
+    }
+
+    fin.close();
+}
+
 /*
 void process_stream_file(){
     ifstream fin ("1_assoc_stream.txt");
@@ -2998,15 +3054,12 @@ int main(int argc, const char* argv[]) {
             //process_stream_file();
             dictionary::destroy_instance();
             return 0;
-/*
-        if(argc==4 && argv[1][0]=='-' && argv[1][1]=='s' && argv[1][2]=='d'){
-            unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
-            cur_model.generate_stream_data(scale_factor);
-            cur_model.save("saved.txt");
-            process_stream_file();
-            dictionary::destroy_instance();
+        }else if (argc==5 && argv[1][0]=='-' && argv[1][1]=='t' && argv[1][2]=='s'){//./watdiv -ts <source-file> <dest-file> <interval>
+            unsigned int interval = boost::lexical_cast<unsigned int>(string(argv[4]));
+            string srce_file = argv[2];
+            string dest_file = argv[3];
+            attach_timestamp(srce_file, dest_file, interval);
             return 0;
-*/
         }else if (argc==4 && argv[1][0]=='-' && argv[1][1]=='d'){
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
             cur_model.generate(scale_factor);
@@ -3104,7 +3157,8 @@ int main(int argc, const char* argv[]) {
             return 0;
         }
     }
-    cout<<"Usage:::\t./watdiv -sd <model-file> <scale-factor>"<<"\n";
+    cout<<"Usage:::\t./watdiv -ts <source-file> <dest-file> <interval>"<<"\n";
+    cout<<"Usage:::\t./watdiv -sd <model-file> <static-scale-factor> <stream-scale-factor>"<<"\n";
     cout<<"Usage:::\t./watdiv -sq <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?>\"<<\"\\n";
     cout<<"Usage:::\t./watdiv -d <model-file> <scale-factor>"<<"\n";
     cout<<"Usage:::\t./watdiv -q <model-file> <query-count> <recurrence-factor>"<<"\n";
