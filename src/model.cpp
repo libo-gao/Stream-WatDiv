@@ -37,14 +37,14 @@ struct hashfunc {
 };
 
 static unordered_map<string, pair<string, string>> purchase;
-static unordered_map<string, double> purchaseTime;
+static unordered_map<string, long> purchaseTime;
 static unordered_map<pair<string, string>, string, hashfunc> reversePurchase;
 static unordered_map<string, pair<string, string>> review;
 static unordered_map<string, double> reviewTime;
 static unordered_map<string, vector<string>> offerRetailer;
 static unordered_map<string, vector<string>> offerCountry;
 static unordered_map<string, vector<string>> offerProduct;
-static unordered_map<string, vector<double>> offerTime;
+static unordered_map<string, vector<long>> offerTime;
 
 /*
 static boost::mt19937 BOOST_RND_GEN = boost::mt19937(static_cast<unsigned> (time(0)));
@@ -2312,7 +2312,7 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
                             fos_review << line << "\n";
                         } else if (_type_prefix == "wsdbm:Purchase") {
                             if (purchaseTime.find(subject) == purchaseTime.end())
-                                purchaseTime[subject] = double(RGEN.next_uniform());
+                                purchaseTime[subject] = RGEN.next_uniform();
                                 fos_purchase << line << "\n";
                         } else if (_type_prefix == "wsdbm:Offer") {
                                 fos_offer << line << "\n";
@@ -2436,9 +2436,9 @@ void association_m_t::generate_stream_data (const namespace_map & n_map, type_ma
                     }
                     offerRetailer[object_str].push_back(subject_str);
                     if(offerTime.find(object_str)==offerTime.end()){
-                        offerTime[object_str] = vector<double>();
+                        offerTime[object_str] = vector<long>();
                     }
-                    offerTime[object_str].push_back(double(RGEN.next_uniform()));
+                    offerTime[object_str].push_back(RGEN.next_uniform());
                     fos<<line<<"\t.\n";
                 }
                 else if(_predicate == "gr:includes"){
@@ -2646,7 +2646,7 @@ void output_stream_file(){
     //boost::random::mt19937 gen(static_cast<unsigned> (time(0)));
 
     string curr_review = "";
-    double curr_time = 0.0;
+    long curr_time = 0;
     bool getTime = true;
     bool skip = false;
     while(getline(in_review, line)){
@@ -2661,7 +2661,7 @@ void output_stream_file(){
         vector<string> items = split(line, '\t');
         if(getTime){
             if(reversePurchase.find(review[items[0]])==reversePurchase.end()){
-                curr_time = double(RGEN.next_uniform());
+                curr_time = RGEN.next_uniform();
             }
             else
                 curr_time = purchaseTime[reversePurchase[review[items[0]]]];
@@ -2681,7 +2681,7 @@ void output_stream_file(){
         fos_stream<<result<<"\n";
     }
 
-    curr_time = 0.0;
+    curr_time = 0;
     string curr_purchase = "";
     getTime = true;
     while(getline(in_purchase, line)){
@@ -2708,7 +2708,7 @@ void output_stream_file(){
         fos_stream<<result<<'\n';
     }
 
-    curr_time = 0.0;
+    curr_time = 0;
     string curr_offer = "";
     vector<string> cache;
     while(getline(in_offer, line)){
