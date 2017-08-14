@@ -46,9 +46,11 @@ static unordered_map<string, vector<string>> offerCountry;
 static unordered_map<string, vector<string>> offerProduct;
 static unordered_map<string, vector<double>> offerTime;
 
+/*
 static boost::mt19937 BOOST_RND_GEN = boost::mt19937(static_cast<unsigned> (time(0)));
 static boost::normal_distribution<double> BOOST_NORMAL_DIST = boost::normal_distribution<double>(0.5, (0.5/3.0));
 static boost::variate_generator<boost::mt19937, boost::normal_distribution<double> > BOOST_NORMAL_DIST_GEN (BOOST_RND_GEN, BOOST_NORMAL_DIST);
+*/
 
 ostream& operator<<(ostream& os, const DISTRIBUTION_TYPES::enum_t & distribution){
     switch (distribution){
@@ -516,7 +518,8 @@ void resource_m_t::generate (const namespace_map & n_map, map<string, unsigned i
         for (vector<predicate_group_m_t*>::const_iterator itr2=_predicate_group_array.begin(); itr2!=_predicate_group_array.end(); itr2++){
             predicate_group_m_t * predicate_group = *itr2;
             if (!predicate_group->_post_process){
-                float draw = ((float) rand())/((float)RAND_MAX);
+                float draw = ((float) RGEN.next_uniform())/((float)RAND_MAX);
+                //float draw = ((float) rand())/((float)RAND_MAX);
                 if (draw<=predicate_group->_gen_probability){
                     for (vector<predicate_m_t*>::const_iterator itr3=predicate_group->_predicate_array.begin(); itr3!=predicate_group->_predicate_array.end(); itr3++){
                         predicate_m_t * predicate = *itr3;
@@ -549,7 +552,8 @@ void resource_m_t::process_type_restrictions (const namespace_map & n_map, const
         for (vector<predicate_group_m_t*>::const_iterator itr2=_predicate_group_array.begin(); itr2!=_predicate_group_array.end(); itr2++){
             predicate_group_m_t * predicate_group = *itr2;
             if (predicate_group->_post_process && t_map.instanceof(subject, n_map.replace(*(predicate_group->_type_restriction)))){
-                float draw = ((float) rand())/((float)RAND_MAX);
+                float draw = ((float) RGEN.next_uniform())/((float)RAND_MAX);
+//                float draw = ((float) rand())/((float)RAND_MAX);
                 if (draw<=predicate_group->_gen_probability){
                     for (vector<predicate_m_t*>::const_iterator itr3=predicate_group->_predicate_array.begin(); itr3!=predicate_group->_predicate_array.end(); itr3++){
                         predicate_m_t * predicate = *itr3;
@@ -754,7 +758,8 @@ void association_m_t::generate (const namespace_map & n_map, type_map & t_map, c
         boost::posix_time::ptime t1 (bpt::microsec_clock::universal_time());
 
         for (unsigned int left_id=0; left_id<left_instance_count; left_id++){
-            float pr = ((float) rand()) / ((float) RAND_MAX);
+            float pr = ((float) RGEN.next_uniform()) / ((float) RAND_MAX);
+//            float pr = ((float) rand()) / ((float) RAND_MAX);
             if (pr<=_left_cover){
                 unsigned int right_size = _right_cardinality;
                 if (_right_cardinality_distribution!=DISTRIBUTION_TYPES::UNDEFINED){
@@ -857,7 +862,8 @@ void association_m_t::process_type_restrictions (const namespace_map & n_map, co
                 subject.append(n_map.replace(_subject_type));
                 subject.append(boost::lexical_cast<string>(left_id));
                 if (_subject_type_restriction==NULL || t_map.instanceof(subject, n_map.replace(*_subject_type_restriction))){
-                    float pr = ((float) rand()) / ((float) RAND_MAX);
+                    float pr = ((float) RGEN.next_uniform()) / ((float) RAND_MAX);
+//                    float pr = ((float) rand()) / ((float) RAND_MAX);
                     if (pr<=_left_cover){
                         unsigned int right_size = _right_cardinality;
                         if (_right_cardinality_distribution!=DISTRIBUTION_TYPES::UNDEFINED){
@@ -1761,11 +1767,13 @@ string model::generate_literal (LITERAL_TYPES::enum_t literal_type, DISTRIBUTION
             offset = (offset>interval) ? interval : offset;
             literal.append(*(dictionary::get_instance()->get_word(DICTIONARY_TYPES::ENGLISH_WORDS, range.first + offset)));
             // Keep appending a few more words from the dictionary...
-            unsigned int wc = rand() % MAX_LITERAL_WORDS;
+            unsigned int wc = RGEN.next_uniform() % MAX_LITERAL_WORDS;
+//            unsigned int wc = rand() % MAX_LITERAL_WORDS;
             unsigned int dict_size = dictionary::get_instance()->word_count(DICTIONARY_TYPES::ENGLISH_WORDS);
             for (unsigned int index=0; index<wc; index++){
                 literal.append(" ");
-                literal.append(*(dictionary::get_instance()->get_word(DICTIONARY_TYPES::ENGLISH_WORDS, rand()%dict_size)));
+                literal.append(*(dictionary::get_instance()->get_word(DICTIONARY_TYPES::ENGLISH_WORDS, RGEN.next_uniform()%dict_size)));
+//                literal.append(*(dictionary::get_instance()->get_word(DICTIONARY_TYPES::ENGLISH_WORDS, rand()%dict_size)));
             }
             break;
         }
@@ -1807,11 +1815,12 @@ double model::generate_random (DISTRIBUTION_TYPES::enum_t distribution_type, int
     double result = 0.0;
     switch (distribution_type){
         case DISTRIBUTION_TYPES::UNIFORM:{
-            result = ((double) rand()) / ((double) RAND_MAX);
+            result = ((double) RGEN.next_uniform()) / ((double) RAND_MAX);
+//            result = ((double) rand()) / ((double) RAND_MAX);
             break;
         }
         case DISTRIBUTION_TYPES::NORMAL:{
-            result = BOOST_NORMAL_DIST_GEN();
+            result = RGEN.next_normal();
             break;
         }
         case DISTRIBUTION_TYPES::ZIPFIAN:{
@@ -1847,7 +1856,8 @@ double model::generate_zipfian (int item_count){
         intervals = zipfian_cache[item_count];
     }
 
-    double random_value = ((double) rand()) / ((double) RAND_MAX);
+    double random_value = ((double) RGEN.next_uniform()) / ((double) RAND_MAX);
+//    double random_value = ((double) rand()) / ((double) RAND_MAX);
     vector<double>::iterator pivot = lower_bound(intervals->begin(), intervals->end(), random_value);
     double result = (pivot - intervals->begin()) * (1.0 / ((double) item_count));
     return result;
@@ -2284,7 +2294,8 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
         for (vector<predicate_group_m_t*>::const_iterator itr2=_predicate_group_array.begin(); itr2!=_predicate_group_array.end(); itr2++){
             predicate_group_m_t * predicate_group = *itr2;
             if (!predicate_group->_post_process){
-                float draw = ((float) rand())/((float)RAND_MAX);
+                float draw = ((float) RGEN.next_uniform())/((float)RAND_MAX);
+//                float draw = ((float) rand())/((float)RAND_MAX);
                 if (draw<=predicate_group->_gen_probability){
                     for (vector<predicate_m_t*>::const_iterator itr3=predicate_group->_predicate_array.begin(); itr3!=predicate_group->_predicate_array.end(); itr3++){
                         predicate_m_t * predicate = *itr3;
@@ -2300,9 +2311,8 @@ void resource_m_t::generate_stream_data (const namespace_map & n_map, map<string
                         if (_type_prefix == "wsdbm:Review") {
                             fos_review << line << "\n";
                         } else if (_type_prefix == "wsdbm:Purchase") {
-                            boost::uniform_real<double> real(0, 1);
                             if (purchaseTime.find(subject) == purchaseTime.end())
-                                purchaseTime[subject] = real(BOOST_RND_GEN);
+                                purchaseTime[subject] = double(RGEN.next_uniform());
                                 fos_purchase << line << "\n";
                         } else if (_type_prefix == "wsdbm:Offer") {
                                 fos_offer << line << "\n";
@@ -2347,7 +2357,8 @@ void association_m_t::generate_stream_data (const namespace_map & n_map, type_ma
     //boost::random::mt19937 gen(static_cast<unsigned> (time(0)));
 
     for (unsigned int left_id=0; left_id<left_instance_count; left_id++){
-        float pr = ((float) rand()) / ((float) RAND_MAX);
+        float pr = ((float) RGEN.next_uniform()) / ((float) RAND_MAX);
+//        float pr = ((float) rand()) / ((float) RAND_MAX);
         if (pr>_left_cover) continue;
         unsigned int right_size = _right_cardinality;
         if (_right_cardinality_distribution!=DISTRIBUTION_TYPES::UNDEFINED){
@@ -2395,8 +2406,7 @@ void association_m_t::generate_stream_data (const namespace_map & n_map, type_ma
 
                 if(_predicate =="wsdbm:likes"){
                     fos<<line;
-                    boost::uniform_real<double> real(0, 1);
-                    fos<<"\t"<<real(BOOST_RND_GEN)<<"\t.\n";
+                    fos<<"\t"<<RGEN.next_uniform()<<"\t.\n";
                 }
                 else if(_predicate == "rev:hasReview"){
                     if(review.find(object_str)==review.end()){
@@ -2418,8 +2428,7 @@ void association_m_t::generate_stream_data (const namespace_map & n_map, type_ma
                 }
                 else if(_predicate == "wsdbm:subscribes"){
                     fos<<line;
-                    boost::uniform_real<double> real(0, 1);
-                    fos<<"\t"<<real(BOOST_RND_GEN)<<"\t.\n";
+                    fos<<"\t"<<RGEN.next_uniform()<<"\t.\n";
                 }
                 else if(_predicate == "gr:offers"){
                     if(offerRetailer.find(object_str)==offerRetailer.end()){
@@ -2429,8 +2438,7 @@ void association_m_t::generate_stream_data (const namespace_map & n_map, type_ma
                     if(offerTime.find(object_str)==offerTime.end()){
                         offerTime[object_str] = vector<double>();
                     }
-                    boost::uniform_real<double> real(0, 1);
-                    offerTime[object_str].push_back(real(BOOST_RND_GEN));
+                    offerTime[object_str].push_back(double(RGEN.next_uniform()));
                     fos<<line<<"\t.\n";
                 }
                 else if(_predicate == "gr:includes"){
@@ -2504,7 +2512,8 @@ void association_m_t::process_stream_type_restrictions (const namespace_map & n_
             subject.append(n_map.replace(_subject_type));
             subject.append(boost::lexical_cast<string>(left_id));
             if (_subject_type_restriction==NULL || t_map.instanceof(subject, n_map.replace(*_subject_type_restriction))){
-                float pr = ((float) rand()) / ((float) RAND_MAX);
+                float pr = ((float) RGEN.next_uniform()) / ((float) RAND_MAX);
+//                float pr = ((float) rand()) / ((float) RAND_MAX);
 
                 if (pr>_left_cover) continue;
 
@@ -2563,8 +2572,7 @@ void association_m_t::process_stream_type_restrictions (const namespace_map & n_
                         }
                         else if(_predicate == "wsdbm:follows"){
                             fos<<line;
-                            boost::uniform_real<double> real(0, 1);
-                            fos<<"\t"<<real(BOOST_RND_GEN)<<"\t.\n";
+                            fos<<"\t"<<RGEN.next_uniform()<<"\t.\n";
                         }
                         else {
                             cout << line << "\t.\n";
@@ -2653,8 +2661,7 @@ void output_stream_file(){
         vector<string> items = split(line, '\t');
         if(getTime){
             if(reversePurchase.find(review[items[0]])==reversePurchase.end()){
-                boost::uniform_real<double> real(0, 1);
-                curr_time = real(BOOST_RND_GEN);
+                curr_time = double(RGEN.next_uniform());
             }
             else
                 curr_time = purchaseTime[reversePurchase[review[items[0]]]];
@@ -3038,6 +3045,11 @@ void process_stream_file(){
  */
 int main(int argc, const char* argv[]) {
     dictionary * dict = dictionary::get_instance();
+
+    if(argv[1][0]=='-'&&argv[1][1]=='s'&&argv[1][2]=='d'){
+        RGEN.initialize(boost::lexical_cast<unsigned int>(string(argv[5])));
+    }
+
     if ((argc==2 || argc==4 || argc==5 || argc>=6) && argv[1][0]=='-'){
         dict->init("/usr/share/dict/words", "../../files/firstnames.txt", "../../files/lastnames.txt");
         const char * model_filename = argv[2];
@@ -3045,7 +3057,7 @@ int main(int argc, const char* argv[]) {
         //statistics stat (cur_model);
         //./watdiv -sd ../../model/wsdbm-data-model.txt 1 1 > static_rdf.txt
         // first '1' is static scale factor, second '1' is streaming scale factor
-        if(argc==5 && argv[1][0]=='-' && argv[1][1]=='s' && argv[1][2]=='d'){
+        if(argc==6 && argv[1][0]=='-' && argv[1][1]=='s' && argv[1][2]=='d'){
             unsigned int static_scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
             unsigned int stream_scale_factor = boost::lexical_cast<unsigned int>(string(argv[4]));
             cur_model.generate_stream_data(static_scale_factor, stream_scale_factor);
@@ -3158,7 +3170,7 @@ int main(int argc, const char* argv[]) {
         }
     }
     cout<<"Usage:::\t./watdiv -ts <source-file> <dest-file> <interval>"<<"\n";
-    cout<<"Usage:::\t./watdiv -sd <model-file> <static-scale-factor> <stream-scale-factor>"<<"\n";
+    cout<<"Usage:::\t./watdiv -sd <model-file> <static-scale-factor> <stream-scale-factor> <rand-seed>"<<"\n";
     cout<<"Usage:::\t./watdiv -sq <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?>\"<<\"\\n";
     cout<<"Usage:::\t./watdiv -d <model-file> <scale-factor>"<<"\n";
     cout<<"Usage:::\t./watdiv -q <model-file> <query-count> <recurrence-factor>"<<"\n";
