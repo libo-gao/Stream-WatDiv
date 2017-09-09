@@ -2800,9 +2800,28 @@ void attach_timestamp(string src, string dst, int interval){
     ifstream fin (src);
     ofstream fos_stream(dst);
 
+    //warm up stream, 1 triple/second
     string line;
-    string last_sig = "";
     string last_time = "0";
+    int i = 0;
+    while(getline(fin, line)){
+        if(line.size()==0) continue;
+        vector<string> items = split(line, '\t');
+        string result="";
+        result.append(items[0]+"\t");
+        result.append(items[1]+"\t");
+        result.append(items[2]+"\t");
+
+        result.append(last_time);
+        last_time = sumAB(last_time, 1000);
+
+        fos_stream<<result<<'\n';
+        i++;
+        if(i==20) break;
+    }
+
+    string last_sig = "";
+    last_time = "30000";
     while(getline(fin, line)){
         if(line.size()==0) continue;
         vector<string> items = split(line, '\t');
