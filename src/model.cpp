@@ -2817,11 +2817,10 @@ void attach_timestamp(string src, string dst, int interval){
 
         fos_stream<<result<<'\n';
         i++;
-        if(i==20) break;
+        if(i==21) break;
     }
 
     string last_sig = "";
-    last_time = "30000";
     while(getline(fin, line)){
         if(line.size()==0) continue;
         vector<string> items = split(line, '\t');
