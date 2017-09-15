@@ -2797,7 +2797,7 @@ string sumAB(string a, int b){
 }
 
 void attach_timestamp(string src, string dst, int interval){
-    ifstream fin (src);
+    ifstream fin(src);
     ofstream fos_stream(dst);
 
     //warm up stream, 1 triple/second
@@ -2813,11 +2813,10 @@ void attach_timestamp(string src, string dst, int interval){
         result.append(items[2]+"\t");
 
         result.append(last_time);
+	fos_stream<<result<<'\n';
+	if(i==21) break;
         last_time = sumAB(last_time, 1000);
-
-        fos_stream<<result<<'\n';
         i++;
-        if(i==21) break;
     }
 
     string last_sig = "";
