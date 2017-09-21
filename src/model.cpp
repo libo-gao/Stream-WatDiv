@@ -2451,6 +2451,7 @@ void association_m_t::generate_stream_data(const namespace_map &n_map, type_map 
     unsigned int left_instance_count = id_cursor_map.find(_subject_type)->second;
     unsigned int right_instance_count = id_cursor_map.find(_object_type)->second;
     unordered_set<unsigned int> mapped_instances;
+    unordered_set<unsigned int> selected_instances;
 
     boost::posix_time::ptime t1(bpt::microsec_clock::universal_time());
 
@@ -2465,6 +2466,7 @@ void association_m_t::generate_stream_data(const namespace_map &n_map, type_map 
             right_size = round((double) right_size * model::generate_random(_right_cardinality_distribution));
             right_size = (right_size > _right_cardinality) ? _right_cardinality : right_size;
         }
+        selected_instances.clear();
         for (unsigned int j = 0; j < right_size; j++) {
             unsigned int loop_counter = 0;
             unsigned int right_id = 0;
@@ -2473,11 +2475,12 @@ void association_m_t::generate_stream_data(const namespace_map &n_map, type_map 
                 right_id = round(r_value * right_instance_count);
                 right_id = (right_id >= right_instance_count) ? (right_instance_count - 1) : right_id;
                 loop_counter++;
-            } while (mapped_instances.find(right_id) != mapped_instances.end() && loop_counter < MAX_LOOP_COUNTER);
+            } while (selected_instances.find(right_id) != selected_instances.end() && mapped_instances.find(right_id) != mapped_instances.end() && loop_counter < MAX_LOOP_COUNTER);
             if (loop_counter < MAX_LOOP_COUNTER) {
                 if (_left_cardinality == 1) {
                     mapped_instances.insert(right_id);
                 }
+                selected_instances.insert(right_id);
                 string subject(""), predicate(""), object(""), triple("");
 
                 // FIXME:: You need to add replace-command...
