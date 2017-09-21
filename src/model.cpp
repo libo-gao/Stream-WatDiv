@@ -2475,7 +2475,7 @@ void association_m_t::generate_stream_data(const namespace_map &n_map, type_map 
                 right_id = round(r_value * right_instance_count);
                 right_id = (right_id >= right_instance_count) ? (right_instance_count - 1) : right_id;
                 loop_counter++;
-            } while (selected_instances.find(right_id) != selected_instances.end() && mapped_instances.find(right_id) != mapped_instances.end() && loop_counter < MAX_LOOP_COUNTER);
+            } while ((mapped_instances.find(right_id) != mapped_instances.end() || selected_instances.find(right_id)!=selected_instances.end()) && loop_counter < MAX_LOOP_COUNTER);
             if (loop_counter < MAX_LOOP_COUNTER) {
                 if (_left_cardinality == 1) {
                     mapped_instances.insert(right_id);
