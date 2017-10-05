@@ -3315,8 +3315,20 @@ int main(int argc, const char *argv[]) {
             volatility_gen::test();
             dictionary::destroy_instance();
             return 0;
+        } else if(argc ==2 && argv[1][0] == '-' && argv[1][1] == 't'){
+            cout<<"uniform: "<<endl;
+            for(int i = 0; i<10; i++)
+                cout<<RGEN.next_uniform()<<endl;
+            cout<<"normal: "<<endl;
+            for(int i = 0; i<10; i++)
+                cout<<RGEN.next_normal()<<endl;
+            cout<<"zipf: "<<endl;
+            for(int i = 0; i<10; i++)
+                cout<<model::generate_random(DISTRIBUTION_TYPES::ZIPFIAN)<<endl;
+            return 0;
         }
     }
+    cout << "Usage:::\t./watdiv -test"<<"\n";
     cout << "Usage:::\t./watdiv -ts <source-file> <dest-file> <interval>" << "\n";
     cout << "Usage:::\t./watdiv -sd <model-file> <static-scale-factor> <stream-scale-factor> <rand-seed>" << "\n";
     cout <<
