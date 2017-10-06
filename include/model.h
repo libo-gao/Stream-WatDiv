@@ -19,7 +19,7 @@ using namespace std;
 
 class RandNumGen{
 public:
-    RandNumGen(int seed = static_cast<unsigned> (time(0))):rand_seed(seed), BOOST_RND_GEN(rand_seed), BOOST_NORMAL_DIST_GEN(BOOST_RND_GEN, BOOST_NORMAL_DIST), BOOST_UNIFORM_DIST_GEN(BOOST_RND_GEN, boost::uniform_int<int>(0, RAND_MAX)) {
+    RandNumGen(int seed = static_cast<unsigned> (time(0))):rand_seed(seed), BOOST_RND_GEN(rand_seed), BOOST_NORMAL_DIST_GEN(BOOST_RND_GEN, BOOST_NORMAL_DIST), BOOST_INT_UNIFORM(0, RAND_MAX), BOOST_UNIFORM_DIST_GEN(BOOST_RND_GEN, BOOST_INT_UNIFORM) {
     }
 
     double next_normal(){
@@ -31,7 +31,7 @@ public:
 private:
     int rand_seed;
     boost::mt19937 BOOST_RND_GEN;
-    boost::random::uniform_int_distribution<> BOOST_INT_UNIFORM = boost::random::uniform_int_distribution<>(0, RAND_MAX);
+    boost::uniform_int<> BOOST_INT_UNIFORM;
     boost::normal_distribution<double> BOOST_NORMAL_DIST = boost::normal_distribution<double>(0.5, (0.5/3.0));
     boost::variate_generator<boost::mt19937, boost::normal_distribution<double>> BOOST_NORMAL_DIST_GEN;
     boost::variate_generator<boost::mt19937, boost::uniform_int<int>> BOOST_UNIFORM_DIST_GEN;
