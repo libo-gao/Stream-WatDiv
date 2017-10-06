@@ -19,6 +19,41 @@ using namespace std;
 
 class RandNumGen{
 public:
+    RandNumGen():rand_seed(1024), BOOST_RND_GEN(rand_seed), BOOST_NORMAL_DIST_GEN(BOOST_RND_GEN, BOOST_NORMAL_DIST), BOOST_UNIFORM_DIST_GEN(BOOST_RND_GEN, boost::uniform_int<int>(0, RAND_MAX)) {
+        init = false;
+    }
+
+    void initialize(int seed = static_cast<unsigned> (time(0))){
+        rand_seed = seed;
+        BOOST_RND_GEN = boost::mt19937(rand_seed);
+        init = true;
+    }
+    double next_normal(){
+        if(!init){
+            //todo
+        }
+        return BOOST_NORMAL_DIST_GEN();
+    }
+    int next_uniform(){
+        if(!init){
+            //todo
+        }
+        return BOOST_INT_UNIFORM(BOOST_RND_GEN);
+        //return (*BOOST_UNIFORM_DIST_GEN)();
+    }
+private:
+    bool init;
+    int rand_seed;
+    boost::mt19937 BOOST_RND_GEN;
+    boost::random::uniform_int_distribution<> BOOST_INT_UNIFORM = boost::random::uniform_int_distribution<>(0, RAND_MAX);
+    boost::normal_distribution<double> BOOST_NORMAL_DIST = boost::normal_distribution<double>(0.5, (0.5/3.0));
+    boost::variate_generator<boost::mt19937, boost::normal_distribution<double>> BOOST_NORMAL_DIST_GEN;
+    boost::variate_generator<boost::mt19937, boost::uniform_int<int>> BOOST_UNIFORM_DIST_GEN;
+};
+
+/*
+class RandNumGen{
+public:
     RandNumGen(){init = false;}
     void initialize(int seed = static_cast<unsigned> (time(0))){
         rand_seed = seed;
@@ -51,7 +86,7 @@ private:
     boost::variate_generator<boost::mt19937, boost::normal_distribution<double>>* BOOST_NORMAL_DIST_GEN;
     boost::variate_generator<boost::mt19937, boost::uniform_int<int>>* BOOST_UNIFORM_DIST_GEN;
 };
-
+*/
 RandNumGen RGEN;
 
 namespace LITERAL_TYPES {
