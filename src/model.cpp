@@ -3195,6 +3195,7 @@ int main(int argc, const char *argv[]) {
     if (argv[1][0] == '-' && argv[1][1] == 's' && argv[1][2] == 'd') {
         RGEN = new RandNumGen(boost::lexical_cast<unsigned int>(string(argv[5])));
     }
+
     if ((argc == 2 || argc == 4 || argc == 5 || argc >= 6) && argv[1][0] == '-') {
         dict->init("/usr/share/dict/words", "../../files/firstnames.txt", "../../files/lastnames.txt");
         const char *model_filename = argv[2];
