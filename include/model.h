@@ -12,31 +12,13 @@
 #include <iostream>
 
 #include <boost/random.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/generator_iterator.hpp>
 
 class volatility_gen;
 
 using namespace std;
-
-class RandNumGen{
-public:
-    RandNumGen(int seed = static_cast<unsigned> (time(0))):rand_seed(seed){
-        BOOST_RND_GEN.seed(rand_seed);
-    }
-
-    double next_normal(){
-        return BOOST_NORMAL_DIST_GEN();
-    }
-    int next_uniform(){
-        return BOOST_UNIFORM_DIST_GEN();
-    }
-private:
-    int rand_seed;
-    boost::mt19937 BOOST_RND_GEN;
-    boost::uniform_int<> BOOST_INT_UNIFORM;
-    boost::normal_distribution<double> BOOST_NORMAL_DIST = boost::normal_distribution<double>(0.5, (0.5/3.0));
-    boost::variate_generator<boost::mt19937, boost::normal_distribution<double> > BOOST_NORMAL_DIST_GEN(BOOST_RND_GEN, BOOST_NORMAL_DIST);
-    boost::variate_generator<boost::mt19937, boost::uniform_int<int> > BOOST_UNIFORM_DIST_GEN(BOOST_RND_GEN, BOOST_INT_UNIFORM);
-};
 
 /*
 class RandNumGen{
@@ -74,7 +56,6 @@ private:
     boost::variate_generator<boost::mt19937, boost::uniform_int<int>>* BOOST_UNIFORM_DIST_GEN;
 };
 */
-RandNumGen* RGEN;
 
 namespace LITERAL_TYPES {
     enum enum_t {
