@@ -3192,9 +3192,16 @@ void process_stream_file(){
  */
 int main(int argc, const char *argv[]) {
     dictionary *dict = dictionary::get_instance();
-
+    //BOOST_RND_GEN.seed(1024);
+    BOOST_NORMAL_DIST_GEN.engine().seed(1024);
+    BOOST_UNIFORM_DIST_GEN.engine().seed(1024);
+    BOOST_NORMAL_DIST_GEN.distribution().reset();
+    BOOST_UNIFORM_DIST_GEN.distribution().reset();
     if (argv[1][0] == '-' && argv[1][1] == 's' && argv[1][2] == 'd') {
-        BOOST_RND_GEN.seed(boost::lexical_cast<unsigned int>(string(argv[5])));
+        BOOST_NORMAL_DIST_GEN.engine().seed(boost::lexical_cast<unsigned int>(string(argv[5])));
+        BOOST_UNIFORM_DIST_GEN.engine().seed(boost::lexical_cast<unsigned int>(string(argv[5])));
+        BOOST_NORMAL_DIST_GEN.distribution().reset();
+        BOOST_UNIFORM_DIST_GEN.distribution().reset();
     }
 
     if ((argc == 2 || argc == 4 || argc == 5 || argc >= 6) && argv[1][0] == '-') {
@@ -3325,7 +3332,7 @@ int main(int argc, const char *argv[]) {
                 cout<<BOOST_NORMAL_DIST_GEN()<<endl;
             cout<<"zipf: "<<endl;
             for(int i = 0; i<10; i++)
-                cout<<model::generate_random(DISTRIBUTION_TYPES::ZIPFIAN)<<endl;
+                cout<<model::generate_random(DISTRIBUTION_TYPES::ZIPFIAN, 10)<<endl;
             return 0;
         }
     }
