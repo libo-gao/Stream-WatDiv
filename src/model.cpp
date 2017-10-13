@@ -52,7 +52,6 @@ static boost::normal_distribution<double> BOOST_NORMAL_DIST = boost::normal_dist
 static boost::variate_generator<boost::mt19937, boost::normal_distribution<double> > BOOST_NORMAL_DIST_GEN (BOOST_RND_GEN, BOOST_NORMAL_DIST);
 static boost::variate_generator<boost::mt19937, boost::uniform_int<int> > BOOST_UNIFORM_DIST_GEN (BOOST_RND_GEN, BOOST_INT_UNIFORM);
 
-
 ostream &operator<<(ostream &os, const DISTRIBUTION_TYPES::enum_t &distribution) {
     switch (distribution) {
         case DISTRIBUTION_TYPES::UNIFORM: {
@@ -2752,10 +2751,6 @@ void output_stream_file() {
     ifstream in_review("1_review_stream.txt");
     ifstream in_purchase("1_purchase_stream.txt");
     ifstream in_offer("1_offer_stream.txt");
-//    ofstream out_review ("3_review.txt");
-//    ofstream out_purchase ("3_purchase.txt");
-//    ofstream out_offer("3_offer.txt");
-    //boost::random::mt19937 gen(static_cast<unsigned> (time(0)));
 
     string curr_review = "";
     long curr_time = 0;
@@ -2845,16 +2840,16 @@ void output_stream_file() {
                     fos_stream << item << '\n';
                 }
                 string assoc1 =
-                        removeBracket(offerRetailer[curr_offer][i]) + '\t' + "http://purl.org/goodrelations/offers" +
-                        '\t' + removeBracket(curr_offer) + '\t' + to_string(curr_time);
+                        removeBracket(offerRetailer[curr_offer][i]) + "\t" + "http://purl.org/goodrelations/offers" +
+                        "\t" + removeBracket(curr_offer) + "\t" + to_string(curr_time);
                 fos_stream << assoc1 << '\n';
-                string assoc2 = removeBracket(curr_offer) + '\t' + "http://purl.org/goodrelations/includes" + '\t' +
-                                removeBracket(offerProduct[curr_offer][0]) + '\t' + to_string(curr_time);
+                string assoc2 = removeBracket(curr_offer) + "\t" + "http://purl.org/goodrelations/includes" + "\t" +
+                                removeBracket(offerProduct[curr_offer][0]) + "\t" + to_string(curr_time);
                 fos_stream << assoc2 << '\n';
                 string assoc3;
                 for (auto country:offerCountry[curr_offer]) {
-                    assoc3 = removeBracket(curr_offer) + '\t' + "http://schema.org/eligibleRegion" + '\t' +
-                             removeBracket(country) + '\t' + to_string(curr_time);
+                    assoc3 = removeBracket(curr_offer) + "\t" + "http://schema.org/eligibleRegion" + "\t" +
+                             removeBracket(country) + "\t" + to_string(curr_time);
                     fos_stream << assoc3 << '\n';
                 }
                 fos_stream << '\n';
@@ -2926,29 +2921,23 @@ string sumAB(string a, int b) {
     return result;
 }
 
-void attach_timestamp(string src, string dst, int interval) {
+void attach_timestamp(string src, string dst, int rate) {
     ifstream fin(src);
     ofstream fos_stream(dst);
+
+    int interval = 1;
+    int batch = 1;
+    if(1000>rate){
+        interval = 1000/rate;
+    }else{
+        batch = rate/1000;
+    }
 
     //warm up stream, 1 triple/second
     string line;
     string last_time = "0";
-    int i = 0;
-    while (getline(fin, line)) {
-        if (line.size() == 0) continue;
-        vector<string> items = split(line, '\t');
-        string result = "";
-        result.append(items[0] + "\t");
-        result.append(items[1] + "\t");
-        result.append(items[2] + "\t");
-
-        result.append(last_time);
-        fos_stream << result << '\n';
-        if (i == 21) break;
-        last_time = sumAB(last_time, 1000);
-        i++;
-    }
-
+    bool first = true;
+    int i = 1;
     string last_sig = "";
     while (getline(fin, line)) {
         if (line.size() == 0) continue;
@@ -2957,250 +2946,39 @@ void attach_timestamp(string src, string dst, int interval) {
         result.append(items[0] + "\t");
         result.append(items[1] + "\t");
         result.append(items[2] + "\t");
-
         string curr_sig = items[3];
-        if (last_sig != curr_sig) {
+        if(first){
             last_sig = curr_sig;
-            last_time = sumAB(last_time, interval);
+            first = false;
+        }
+        if(last_sig!=curr_sig){
+            if(batch==1||i>=batch){
+                last_sig = curr_sig;
+                last_time = sumAB(last_time, interval);
+                i = 1;
+            }else if(i<batch){
+                i++;
+            }
         }
         result.append(last_time);
-
         fos_stream << result << '\n';
-
     }
 
     fin.close();
 }
 
-/*
-void process_stream_file(){
-    ifstream fin ("1_assoc_stream.txt");
-    ofstream fos_review("2_assoc_review_purchase_stream.txt");
-    ofstream fos_like("2_assoc_like_stream.txt");
 
-    string line;
-    while(getline(fin, line)){
-        vector<string> items = split(line, '\t');
-        if(items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/likes>"||items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/follows>"||items[1]=="<http://db.uwaterloo.ca/~galuc/wsdbm/subscribes>") {
-            string result="";
-            size_t found = items[0].find('>');
-            result.append(items[0].substr(1, found-1)+"\t");
-            found = items[1].find('>');
-            result.append(items[1].substr(1, found-1)+"\t");
-            found = items[2].find('>');
-            result.append(items[2].substr(1, found-1)+"\t");
-            result.append(items[3]);
-            fos_like<<result<<'\n';
-        }
-        else{
-            string result="";
-            size_t found = items[0].find('>');
-            result.append(items[0].substr(1, found-1)+"\t");
-            found = items[1].find('>');
-            result.append(items[1].substr(1, found-1)+"\t");
-            found = items[2].find('>');
-            result.append(items[2].substr(1, found-1));
-            fos_review<<result<<'\n';
-        }
-    }
-
-    fin.close();
-    fos_like.close();
-    fos_review.close();
-
-    //sort the assoc_like files according to the attached random number
-    string cmd = "sort -n -k 4 2_assoc_like_stream.txt > like_stream.txt";
-    char ls_cmd[100];
-    sprintf(ls_cmd, cmd.c_str());
-    system(ls_cmd);
-
-    //build the reviewPurchase
-    for(auto it = purchase.begin();it!=purchase.end();it++){
-        reversePurchase[it->second] = it->first;
-    }
-
-    ifstream in_review ("1_review_stream.txt");
-    ifstream in_purchase("1_purchase_stream.txt");
-    ifstream in_offer("1_offer_stream.txt");
-    ofstream out_review ("3_review.txt");
-    ofstream out_purchase ("3_purchase.txt");
-    ofstream out_offer("3_offer.txt");
-    //boost::random::mt19937 gen(static_cast<unsigned> (time(0)));
-
-    string curr_review = "";
-    double curr_time = 0.0;
-    bool getTime = true;
-    bool skip = false;
-    while(getline(in_review, line)){
-        if (line.size()==0) {
-            if(getTime) continue;
-            string review1 = removeBracket(curr_review) +"\t"+ "http://purl.org/stuff/rev#reviewer"+"\t"+removeBracket(review[curr_review].first) + "\t" + to_string(curr_time);
-            string review2 = removeBracket(review[curr_review].second) + "\t" + "http://purl.org/stuff/rev#hasReview" + "\t" + removeBracket(curr_review) + "\t" + to_string(curr_time);
-            out_review<<review1<<"\n"<<review2<<"\n"<<"\n";
-            getTime = true;
-            continue;
-        }
-        vector<string> items = split(line, '\t');
-        if(getTime){
-            if(reversePurchase.find(review[items[0]])==reversePurchase.end()){
-                boost::uniform_real<double> real(0, 1);
-                curr_time = real(BOOST_RND_GEN);
-            }
-            else
-                curr_time = purchaseTime[reversePurchase[review[items[0]]]];
-            curr_review = items[0];
-            if(review[curr_review].first.size()==0||review[curr_review].second.size()==0){skip = true; continue;}
-            else skip = false;
-            getTime = false;
-        }
-        if(skip) continue;
-        string result="";
-        size_t found = items[0].find('>');
-        result.append(items[0].substr(1, found-1)+"\t");
-        found = items[1].find('>');
-        result.append(items[1].substr(1, found-1)+"\t");
-        result.append(items[2]+"\t");
-        result.append(to_string(curr_time));
-        out_review<<result<<"\n";
-    }
-
-    curr_time = 0.0;
-    string curr_purchase = "";
-    getTime = true;
-    while(getline(in_purchase, line)){
-        if(!line.size()){
-            string purchase1 = removeBracket(purchase[curr_purchase].first) + "\t" + "http://db.uwaterloo.ca/~galuc/wsdbm/makesPurchase" + "\t" + removeBracket(curr_purchase)+"\t"+to_string(curr_time);
-            string purchase2 = removeBracket(curr_purchase) + "\t" + "http://db.uwaterloo.ca/~galuc/wsdbm/purchaseFor" + "\t" + removeBracket(purchase[curr_purchase].second)+"\t"+to_string(curr_time);
-            out_purchase<<purchase1<<'\n'<<purchase2<<'\n'<<'\n';
-            getTime = true;
-            continue;
-        }
-        vector<string> items = split(line, '\t');
-        if(getTime){
-            curr_time = purchaseTime[items[0]];
-            getTime = false;
-        }
-        curr_purchase = items[0];
-        string result="";
-        size_t found = items[0].find('>');
-        result.append(items[0].substr(1, found-1)+"\t");
-        found = items[1].find('>');
-        result.append(items[1].substr(1, found-1)+"\t");
-        result.append(items[2]+"\t");
-        result.append(to_string(purchaseTime[items[0]]));
-        out_purchase<<result<<'\n';
-    }
-
-    curr_time = 0.0;
-    string curr_offer = "";
-    vector<string> cache;
-    while(getline(in_offer, line)){
-        if(!line.size()){
-            for(int i = 0; i<offerRetailer[curr_offer].size(); i++){
-                curr_time = offerTime[curr_offer][i];
-                for(auto item: cache){
-                    item.append(to_string(curr_time));
-                    out_offer<<item<<'\n';
-                }
-                string assoc1 = removeBracket(offerRetailer[curr_offer][i]) + '\t' + "http://purl.org/goodrelations/offers" + '\t' + removeBracket(curr_offer) + '\t' + to_string(curr_time);
-                out_offer<<assoc1<<'\n';
-                string assoc2 = removeBracket(curr_offer) + '\t' + "http://purl.org/goodrelations/includes" + '\t' + removeBracket(offerProduct[curr_offer][0]) + '\t' + to_string(curr_time);
-                out_offer<<assoc2<<'\n';
-                string assoc3;
-                for(auto country:offerCountry[curr_offer]){
-                    assoc3 = removeBracket(curr_offer) + '\t' + "http://schema.org/eligibleRegion" + '\t' + removeBracket(country) + '\t' + to_string(curr_time);
-                    out_offer<<assoc3<<'\n';
-                }
-                out_offer<<'\n';
-            }
-            cache.clear();
-            continue;
-        }
-        vector<string> items = split(line, '\t');
-        curr_offer = items[0];
-        string result="";
-        size_t found = items[0].find('>');
-        result.append(items[0].substr(1, found-1)+"\t");
-        found = items[1].find('>');
-        result.append(items[1].substr(1, found-1)+"\t");
-        result.append(items[2]+"\t");
-        cache.push_back(result);
-    }
-
-
-    in_review.close();
-    in_purchase.close();
-    in_offer.close();
-    out_review.close();
-    out_purchase.close();
-    out_offer.close();
-
-    string cmd2 = "sort -s -t '\t' -n -k 4 3_purchase.txt > 3_purchase_temp.txt";
-    char ls_cmd2[100];
-    sprintf(ls_cmd2, cmd2.c_str());
-    system(ls_cmd2);
-
-    //'^$' will match an empty line
-    string cmd3 = "grep -v '^$' 3_purchase_temp.txt > purchase.txt";
-    char ls_cmd3[100];
-    sprintf(ls_cmd3, cmd3.c_str());
-    system(ls_cmd3);
-
-    string cmd4 = "sort -s -t '\t' -n -k 4 3_review.txt > 3_review_temp.txt";
-    char ls_cmd4[100];
-    sprintf(ls_cmd4, cmd4.c_str());
-    system(ls_cmd4);
-
-    string cmd5 = "grep -v '^$' 3_review_temp.txt > review.txt";
-    char ls_cmd5[100];
-    sprintf(ls_cmd5, cmd5.c_str());
-    system(ls_cmd5);
-
-    string cmd6 = "sort -s -t '\t' -n -k 4 3_offer.txt > 3_offer_temp.txt";
-    char ls_cmd6[100];
-    sprintf(ls_cmd6, cmd6.c_str());
-    system(ls_cmd6);
-
-    string cmd7 = "grep -v '^$' 3_offer_temp.txt > offer.txt";
-    char ls_cmd7[100];
-    sprintf(ls_cmd7, cmd7.c_str());
-    system(ls_cmd7);
-
-    remove("1_offer_stream.txt");
-    remove("3_offer.txt");
-    remove("3_offer_temp.txt");
-    remove("1_assoc_stream.txt");
-    remove("2_assoc_like_stream.txt");
-    remove("1_review_stream.txt");
-    remove("1_purchase_stream.txt");
-    remove("2_assoc_review_purchase_stream.txt");
-    remove("3_purchase.txt");
-    remove("3_review.txt");
-    remove("3_purchase_temp.txt");
-    remove("3_review_temp.txt");
-
-};
-
-*/
-
-/**
- * todo
- * done. 1. random value for purchase and review
- * done 2. sort the purchase and review result
- * done 3. decide the distribution model
- * 4. add a parameter in the cli, random seed, so the benchmark is reproducable
- */
 int main(int argc, const char *argv[]) {
     dictionary *dict = dictionary::get_instance();
-    //BOOST_RND_GEN.seed(1024);
+
     BOOST_NORMAL_DIST_GEN.engine().seed(1024);
-    BOOST_UNIFORM_DIST_GEN.engine().seed(1024);
     BOOST_NORMAL_DIST_GEN.distribution().reset();
+    BOOST_UNIFORM_DIST_GEN.engine().seed(1024);
     BOOST_UNIFORM_DIST_GEN.distribution().reset();
-    if (argv[1][0] == '-' && argv[1][1] == 's' && argv[1][2] == 'd') {
+    if (argc == 6 && argv[1][0] == '-' && argv[1][1] == 's' && argv[1][2] == 'd') {
         BOOST_NORMAL_DIST_GEN.engine().seed(boost::lexical_cast<unsigned int>(string(argv[5])));
-        BOOST_UNIFORM_DIST_GEN.engine().seed(boost::lexical_cast<unsigned int>(string(argv[5])));
         BOOST_NORMAL_DIST_GEN.distribution().reset();
+        BOOST_UNIFORM_DIST_GEN.engine().seed(boost::lexical_cast<unsigned int>(string(argv[5])));
         BOOST_UNIFORM_DIST_GEN.distribution().reset();
     }
 
@@ -3209,7 +2987,7 @@ int main(int argc, const char *argv[]) {
         const char *model_filename = argv[2];
         model cur_model(model_filename);
         //statistics stat (cur_model);
-        //./watdiv -sd ../../model/wsdbm-data-model.txt 1 1 > static_rdf.txt
+        //./watdiv -sd ../../model/wsdbm-data-model.txt 1 1 1024 > static_rdf.txt
         // first '1' is static scale factor, second '1' is streaming scale factor
         if (argc == 6 && argv[1][0] == '-' && argv[1][1] == 's' && argv[1][2] == 'd') {
             unsigned int static_scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
@@ -3220,12 +2998,12 @@ int main(int argc, const char *argv[]) {
             //process_stream_file();
             dictionary::destroy_instance();
             return 0;
-        } else if (argc == 5 && argv[1][0] == '-' && argv[1][1] == 't' &&
-                   argv[1][2] == 's') {//./watdiv -ts <source-file> <dest-file> <interval>
-            unsigned int interval = boost::lexical_cast<unsigned int>(string(argv[4]));
-            string srce_file = argv[2];
+        //./watdiv -ts <source-file> <dest-file> <interval>
+        } else if (argc == 5 && argv[1][0] == '-' && argv[1][1] == 't' && argv[1][2] == 's') {
+            unsigned int rate = boost::lexical_cast<unsigned int>(string(argv[4]));
+            string src_file = argv[2];
             string dest_file = argv[3];
-            attach_timestamp(srce_file, dest_file, interval);
+            attach_timestamp(src_file, dest_file, rate);
             return 0;
         } else if (argc == 4 && argv[1][0] == '-' && argv[1][1] == 'd') {
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
@@ -3323,34 +3101,18 @@ int main(int argc, const char *argv[]) {
             volatility_gen::test();
             dictionary::destroy_instance();
             return 0;
-        } else if(argc ==2 && argv[1][0] == '-' && argv[1][1] == 't'){
-            cout<<"uniform: "<<endl;
-            for(int i = 0; i<10; i++)
-                cout<<BOOST_UNIFORM_DIST_GEN()<<endl;
-            cout<<"normal: "<<endl;
-            for(int i = 0; i<10; i++)
-                cout<<BOOST_NORMAL_DIST_GEN()<<endl;
-            cout<<"zipf: "<<endl;
-            for(int i = 0; i<10; i++)
-                cout<<model::generate_random(DISTRIBUTION_TYPES::ZIPFIAN, 10)<<endl;
-            return 0;
         }
     }
-    cout << "Usage:::\t./watdiv -test"<<"\n";
-    cout << "Usage:::\t./watdiv -ts <source-file> <dest-file> <interval>" << "\n";
+
+    cout << "Usage:::\t./watdiv -ts <source-file> <dest-file> <stream-rate>" << "\n";
     cout << "Usage:::\t./watdiv -sd <model-file> <static-scale-factor> <stream-scale-factor> <rand-seed>" << "\n";
-    cout <<
-    "Usage:::\t./watdiv -sq <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?>\"<<\"\\n";
+    cout << "Usage:::\t./watdiv -sq <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?>" << "\\n";
     cout << "Usage:::\t./watdiv -d <model-file> <scale-factor>" << "\n";
     cout << "Usage:::\t./watdiv -q <model-file> <query-count> <recurrence-factor>" << "\n";
     cout << "        \t./watdiv -q <model-file> <query-file> <query-count> <recurrence-factor>" << "\n";
     cout << "Usage:::\t./watdiv -s <model-file> <dataset-file> <max-query-size> <query-count>" << "\n";
-    cout <<
-    "        \t./watdiv -s <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count>" <<
-    "\n";
-    cout <<
-    "        \t./watdiv -s <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?>" <<
-    "\n";
+    cout << "        \t./watdiv -s <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count>" << "\n";
+    cout << "        \t./watdiv -s <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?>" << "\n";
     //cout<<"Usage:::\t./watdiv -x"<<"\n";
     //cout<<"        \t./watdiv -s <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?> <duplicate-edges-allowed?>"<<"\n";
     dictionary::destroy_instance();
