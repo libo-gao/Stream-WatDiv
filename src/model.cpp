@@ -3000,10 +3000,23 @@ int main(int argc, const char *argv[]) {
             return 0;
         //./watdiv -ts <source-file> <dest-file> <interval>
         } else if (argc == 5 && argv[1][0] == '-' && argv[1][1] == 't' && argv[1][2] == 's') {
-            unsigned int rate = boost::lexical_cast<unsigned int>(string(argv[4]));
+            unsigned int rate = boost::lexical_cast <unsigned int> (string(argv[4]));
             string src_file = argv[2];
             string dest_file = argv[3];
             attach_timestamp(src_file, dest_file, rate);
+            return 0;
+        // ./watdiv -sq <model-file> <static-dataset> <stream-dataset> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?> <duplicate-edges-allowed?>
+        } else if (argc ==10 && strlen(argv[1])==3 && argv[1][0] == '-' && argv[1][1] == 's' && argv[1][2] == 'q'){
+            cur_model.load("saved.txt");
+            vector<triple_st> triple_array = triple_st::parse_file(argv[3]);
+            vector<triple_st> stream_file = triple_st::parse_file(argv[4]);
+            triple_array.insert(triple_array.end(), stream_file.begin(), stream_file.end());
+            int maxQSize = boost::lexical_cast<int>(argv[4]);
+            int qCount = boost::lexical_cast<int>(argv[5]);
+            int constCount = boost::lexical_cast<int>(argv[6]);
+            statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[7][0] == 't',
+                            argv[8][0] == 't');
+            dictionary::destroy_instance();
             return 0;
         } else if (argc == 4 && argv[1][0] == '-' && argv[1][1] == 'd') {
             unsigned int scale_factor = boost::lexical_cast<unsigned int>(string(argv[3]));
@@ -3106,7 +3119,7 @@ int main(int argc, const char *argv[]) {
 
     cout << "Usage:::\t./watdiv -ts <source-file> <dest-file> <stream-rate>" << "\n";
     cout << "Usage:::\t./watdiv -sd <model-file> <static-scale-factor> <stream-scale-factor> <rand-seed>" << "\n";
-    cout << "Usage:::\t./watdiv -sq <model-file> <dataset-file> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?>" << "\n";
+    cout << "Usage:::\t./watdiv -sq <model-file> <static-dataset> <stream-dataset> <max-query-size> <query-count> <constant-per-query-count> <constant-join-vertex-allowed?> <duplicate-edges-allowed?>" << "\n";
     cout << "Usage:::\t./watdiv -d <model-file> <scale-factor>" << "\n";
     cout << "Usage:::\t./watdiv -q <model-file> <query-count> <recurrence-factor>" << "\n";
     cout << "        \t./watdiv -q <model-file> <query-file> <query-count> <recurrence-factor>" << "\n";
