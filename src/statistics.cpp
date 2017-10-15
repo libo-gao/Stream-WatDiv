@@ -6,6 +6,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/lexical_cast.hpp>
+#include <fstream>
 
 ostream &operator<<(ostream &os, const QUERY_STRUCTURE::enum_t &query_structure) {
     switch (query_structure) {
@@ -579,8 +580,11 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
     qTemplate.append("#end");
     qTemplate.append("\n");
 
+    ofstream fos_stream("workload.txt");
+
     if (varValid && qValid) {
-        cout << qTemplate;
+        if(isStream) fos_stream<<qTemplate;
+        else cout << qTemplate;
         return true;
     }
     /*

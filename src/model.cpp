@@ -3040,6 +3040,29 @@ int main(int argc, const char *argv[]) {
             int constCount = boost::lexical_cast<int>(argv[7]);
             statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[8][0] == 't',
                             argv[9][0] == 't', true);
+            ifstream fin("workload.txt");
+            vector<string> workload;
+            string line, qTemplateStr = "";
+            while (getline(fin, line)) {
+                if (boost::starts_with(line, "#end")) {
+                    query_template_m_t q_template(&cur_model);
+                    q_template.parse_str(qTemplateStr);
+                    q_template.instantiate(1, 1, workload);
+                    qTemplateStr = "";
+                } else {
+                    qTemplateStr.append(line);
+                    qTemplateStr.append("\n");
+                }
+            }
+
+            // obtain a time-based seed:
+            //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+            //shuffle (workload.begin(), workload.end(), std::default_random_engine(seed));
+
+            for (int qid = 0; qid < workload.size(); qid++) {
+                cout << workload[qid];
+            }
+
             dictionary::destroy_instance();
             return 0;
         } else if (argc == 4 && argv[1][0] == '-' && argv[1][1] == 'd') {
