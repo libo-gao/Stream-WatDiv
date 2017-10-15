@@ -46,7 +46,7 @@ ostream& operator<<(ostream& os, const statistics_st & stats);
 
 class statistics{
     public:
-        statistics(const model * mdl, const vector<triple_st> & triple_array, int maxQSize, int qCount, int constCount, bool constJoinVertexAllowed, bool dupEdgesAllowed);
+        statistics(const model * mdl, const vector<triple_st> & triple_array, int maxQSize, int qCount, int constCount, bool constJoinVertexAllowed, bool dupEdgesAllowed, bool isStream);
         ~statistics();
 
         ///void compute();
@@ -65,7 +65,7 @@ class statistics{
         void infer_edges();
         void print_graph() const;
 
-        bool traverse_graph(int max_size, int const_count, bool constJoinVertexAllowed, bool dupEdgesAllowed, map<pair<QUERY_STRUCTURE::enum_t, QUERY_CATEGORY::enum_t>, map<string, string> > & query_map) const;
+        bool traverse_graph(int max_size, int const_count, bool constJoinVertexAllowed, bool dupEdgesAllowed, map<pair<QUERY_STRUCTURE::enum_t, QUERY_CATEGORY::enum_t>, map<string, string> > & query_map, bool isStream) const;
 
         string get_key (string entity, string predicate, bool direction, DISTRIBUTION_TYPES::enum_t distribution) const;
         ///pair<double, double> sample (string entity, DISTRIBUTION_TYPES::enum_t distribution, string predicate, bool direction) const;

@@ -3033,13 +3033,13 @@ int main(int argc, const char *argv[]) {
         } else if (argc ==10 && strlen(argv[1])==3 && argv[1][0] == '-' && argv[1][1] == 's' && argv[1][2] == 'q'){
             cur_model.load("saved.txt");
             vector<triple_st> triple_array = triple_st::parse_file(argv[3]);
-            vector<triple_st> stream_file = triple_st::parse_file(argv[4]);
+            vector<triple_st> stream_file = triple_st::parse_stream_file(argv[4]);
             triple_array.insert(triple_array.end(), stream_file.begin(), stream_file.end());
             int maxQSize = boost::lexical_cast<int>(argv[5]);
             int qCount = boost::lexical_cast<int>(argv[6]);
             int constCount = boost::lexical_cast<int>(argv[7]);
             statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[8][0] == 't',
-                            argv[9][0] == 't');
+                            argv[9][0] == 't', true);
             dictionary::destroy_instance();
             return 0;
         } else if (argc == 4 && argv[1][0] == '-' && argv[1][1] == 'd') {
@@ -3103,7 +3103,7 @@ int main(int argc, const char *argv[]) {
             vector<triple_st> triple_array = triple_st::parse_file(argv[3]);
             int maxQSize = boost::lexical_cast<int>(argv[4]);
             int qCount = boost::lexical_cast<int>(argv[5]);
-            statistics stat(&cur_model, triple_array, maxQSize, qCount, 1, false, false);
+            statistics stat(&cur_model, triple_array, maxQSize, qCount, 1, false, false, false);
             dictionary::destroy_instance();
             return 0;
         } else if (argc == 7 && argv[1][0] == '-' && argv[1][1] == 's') {
@@ -3112,7 +3112,7 @@ int main(int argc, const char *argv[]) {
             int maxQSize = boost::lexical_cast<int>(argv[4]);
             int qCount = boost::lexical_cast<int>(argv[5]);
             int constCount = boost::lexical_cast<int>(argv[6]);
-            statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, false, false);
+            statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, false, false, false);
             dictionary::destroy_instance();
             return 0;
         } else if (argc == 8 && argv[1][0] == '-' && argv[1][1] == 's') {
@@ -3121,7 +3121,7 @@ int main(int argc, const char *argv[]) {
             int maxQSize = boost::lexical_cast<int>(argv[4]);
             int qCount = boost::lexical_cast<int>(argv[5]);
             int constCount = boost::lexical_cast<int>(argv[6]);
-            statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[7][0] == 't', false);
+            statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[7][0] == 't', false, false);
             dictionary::destroy_instance();
             return 0;
         } else if (argc == 9 && argv[1][0] == '-' && argv[1][1] == 's') {
@@ -3131,7 +3131,7 @@ int main(int argc, const char *argv[]) {
             int qCount = boost::lexical_cast<int>(argv[5]);
             int constCount = boost::lexical_cast<int>(argv[6]);
             statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[7][0] == 't',
-                            argv[8][0] == 't');
+                            argv[8][0] == 't', false);
             dictionary::destroy_instance();
             return 0;
         } else if (argc == 2 && argv[1][0] == '-' && argv[1][1] == 'x') {

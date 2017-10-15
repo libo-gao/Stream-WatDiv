@@ -7,25 +7,25 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/lexical_cast.hpp>
 
-ostream& operator<<(ostream& os, const QUERY_STRUCTURE::enum_t & query_structure){
-    switch (query_structure){
-        case QUERY_STRUCTURE::PATH:{
+ostream &operator<<(ostream &os, const QUERY_STRUCTURE::enum_t &query_structure) {
+    switch (query_structure) {
+        case QUERY_STRUCTURE::PATH: {
             os << "[path]";
             break;
         }
-        case QUERY_STRUCTURE::STAR:{
+        case QUERY_STRUCTURE::STAR: {
             os << "[star]";
             break;
         }
-        case QUERY_STRUCTURE::SNOWFLAKE:{
+        case QUERY_STRUCTURE::SNOWFLAKE: {
             os << "[snowflake]";
             break;
         }
-        case QUERY_STRUCTURE::COMPLEX:{
+        case QUERY_STRUCTURE::COMPLEX: {
             os << "[complex]";
             break;
         }
-        case QUERY_STRUCTURE::UNDEFINED:{
+        case QUERY_STRUCTURE::UNDEFINED: {
             os << "[undefined]";
             break;
         }
@@ -33,21 +33,21 @@ ostream& operator<<(ostream& os, const QUERY_STRUCTURE::enum_t & query_structure
     return os;
 }
 
-ostream& operator<<(ostream& os, const QUERY_CATEGORY::enum_t & query_category){
-    switch (query_category){
-        case QUERY_CATEGORY::LOW_SELECTIVITY:{
+ostream &operator<<(ostream &os, const QUERY_CATEGORY::enum_t &query_category) {
+    switch (query_category) {
+        case QUERY_CATEGORY::LOW_SELECTIVITY: {
             os << "[low]";
             break;
         }
-        case QUERY_CATEGORY::MEDIUM_SELECTIVITY:{
+        case QUERY_CATEGORY::MEDIUM_SELECTIVITY: {
             os << "[medium]";
             break;
         }
-        case QUERY_CATEGORY::HIGH_SELECTIVITY:{
+        case QUERY_CATEGORY::HIGH_SELECTIVITY: {
             os << "[high]";
             break;
         }
-        case QUERY_CATEGORY::UNDEFINED:{
+        case QUERY_CATEGORY::UNDEFINED: {
             os << "[undefined]";
             break;
         }
@@ -55,12 +55,14 @@ ostream& operator<<(ostream& os, const QUERY_CATEGORY::enum_t & query_category){
     return os;
 }
 
-ostream& operator<<(ostream& os, const statistics_st & stats){
-    os <<"\t" << "(" << stats._vertex1 << ", " << stats._edge << ", " << stats._vertex2 << ", " << stats._right_distribution << ")" << "\n";
+ostream &operator<<(ostream &os, const statistics_st &stats) {
+    os << "\t" << "(" << stats._vertex1 << ", " << stats._edge << ", " << stats._vertex2 << ", " <<
+    stats._right_distribution << ")" << "\n";
     return os;
 }
 
-statistics_st::statistics_st (const string & vertex1, const string & vertex2, const string & edge, DISTRIBUTION_TYPES::enum_t right_distribution, int group_id){
+statistics_st::statistics_st(const string &vertex1, const string &vertex2, const string &edge,
+                             DISTRIBUTION_TYPES::enum_t right_distribution, int group_id) {
     _vertex1 = vertex1;
     _vertex2 = vertex2;
     _edge = edge;
@@ -70,20 +72,21 @@ statistics_st::statistics_st (const string & vertex1, const string & vertex2, co
     _pr_right = 0.0;
 }
 
-bool statistics_st::operator< (const statistics_st & rhs) const{
-    if (_edge.compare(rhs._edge)!=0){
-        return _edge.compare(rhs._edge)<0;
+bool statistics_st::operator<(const statistics_st &rhs) const {
+    if (_edge.compare(rhs._edge) != 0) {
+        return _edge.compare(rhs._edge) < 0;
     }
-    if (_vertex1.compare(rhs._vertex1)!=0){
-        return _vertex1.compare(rhs._vertex1)<0;
+    if (_vertex1.compare(rhs._vertex1) != 0) {
+        return _vertex1.compare(rhs._vertex1) < 0;
     }
-    if (_vertex2.compare(rhs._vertex2)!=0){
-        return _vertex2.compare(rhs._vertex2)<0;
+    if (_vertex2.compare(rhs._vertex2) != 0) {
+        return _vertex2.compare(rhs._vertex2) < 0;
     }
 }
 
-statistics::statistics(const model * mdl, const vector<triple_st> & triple_array, int maxQSize, int qCount, int constCount, bool constJoinVertexAllowed, bool dupEdgesAllowed){
-    srand (time(NULL));
+statistics::statistics(const model *mdl, const vector<triple_st> &triple_array, int maxQSize, int qCount,
+                       int constCount, bool constJoinVertexAllowed, bool dupEdgesAllowed, bool isStream) {
+    srand(time(NULL));
     _model = mdl;
     index_triples(triple_array);
     extract_schema(*_model);
@@ -94,9 +97,9 @@ statistics::statistics(const model * mdl, const vector<triple_st> & triple_array
 
     map<pair<QUERY_STRUCTURE::enum_t, QUERY_CATEGORY::enum_t>, map<string, string> > query_map;
 
-    for (int i=0; i<qCount; ){
+    for (int i = 0; i < qCount;) {
         int qSize = (rand() % maxQSize) + 1;
-        if (traverse_graph(qSize, constCount, constJoinVertexAllowed, dupEdgesAllowed, query_map)){
+        if (traverse_graph(qSize, constCount, constJoinVertexAllowed, dupEdgesAllowed, query_map, isStream)) {
             i++;
         }
     }
@@ -123,38 +126,41 @@ statistics::statistics(const model * mdl, const vector<triple_st> & triple_array
     */
 }
 
-statistics::~statistics(){
+statistics::~statistics() {
 }
 
-void statistics::extract_schema(const model & mdl){
-    vector<statistics_st> * result = new vector<statistics_st> ();
+void statistics::extract_schema(const model &mdl) {
+    vector<statistics_st> *result = new vector<statistics_st>();
     int group_id = 0;
-    for (vector<resource_m_t*>::const_iterator itr1=mdl._resource_array.begin(); itr1!=mdl._resource_array.end(); itr1++){
-        const resource_m_t * rsrc = *itr1;
-        for (vector<predicate_group_m_t*>::const_iterator itr2=rsrc->_predicate_group_array.begin(); itr2!=rsrc->_predicate_group_array.end(); itr2++){
-            const predicate_group_m_t * pgroup = *itr2;
-            for (vector<predicate_m_t*>::const_iterator itr3=pgroup->_predicate_array.begin(); itr3!=pgroup->_predicate_array.end(); itr3++){
-                const predicate_m_t * pred = *itr3;
+    for (vector<resource_m_t *>::const_iterator itr1 = mdl._resource_array.begin();
+         itr1 != mdl._resource_array.end(); itr1++) {
+        const resource_m_t *rsrc = *itr1;
+        for (vector<predicate_group_m_t *>::const_iterator itr2 = rsrc->_predicate_group_array.begin();
+             itr2 != rsrc->_predicate_group_array.end(); itr2++) {
+            const predicate_group_m_t *pgroup = *itr2;
+            for (vector<predicate_m_t *>::const_iterator itr3 = pgroup->_predicate_array.begin();
+                 itr3 != pgroup->_predicate_array.end(); itr3++) {
+                const predicate_m_t *pred = *itr3;
                 string vertex1 = "", vertex2 = "", edge = "";
                 vertex1.append(rsrc->_type_prefix);
-                if (pgroup->_type_restriction!=NULL){
+                if (pgroup->_type_restriction != NULL) {
                     vertex1.append("@");
                     vertex1.append(*pgroup->_type_restriction);
                 }
-                switch (pred->_literal_type){
-                    case LITERAL_TYPES::DATE:{
+                switch (pred->_literal_type) {
+                    case LITERAL_TYPES::DATE: {
                         vertex2.append("date");
                         break;
                     }
-                    case LITERAL_TYPES::INTEGER:{
+                    case LITERAL_TYPES::INTEGER: {
                         vertex2.append("integer");
                         break;
                     }
-                    case LITERAL_TYPES::NAME:{
+                    case LITERAL_TYPES::NAME: {
                         vertex2.append("name");
                         break;
                     }
-                    case LITERAL_TYPES::STRING:{
+                    case LITERAL_TYPES::STRING: {
                         vertex2.append("string");
                         break;
                     }
@@ -165,16 +171,17 @@ void statistics::extract_schema(const model & mdl){
             group_id++;
         }
     }
-    for (vector<association_m_t*>::const_iterator itr1=mdl._association_array.begin(); itr1!=mdl._association_array.end(); itr1++){
-        const association_m_t * assoc = *itr1;
+    for (vector<association_m_t *>::const_iterator itr1 = mdl._association_array.begin();
+         itr1 != mdl._association_array.end(); itr1++) {
+        const association_m_t *assoc = *itr1;
         string vertex1 = "", vertex2 = "", edge = "";
         vertex1.append(assoc->_subject_type);
-        if (assoc->_subject_type_restriction!=NULL){
+        if (assoc->_subject_type_restriction != NULL) {
             vertex1.append("@");
             vertex1.append(*assoc->_subject_type_restriction);
         }
         vertex2.append(assoc->_object_type);
-        if (assoc->_object_type_restriction!=NULL){
+        if (assoc->_object_type_restriction != NULL) {
             vertex2.append("@");
             vertex2.append(*assoc->_object_type_restriction);
         }
@@ -187,10 +194,10 @@ void statistics::extract_schema(const model & mdl){
     delete result;
 }
 
-void statistics::populate_graph(const vector<statistics_st> & tuples){
-    for (vector<statistics_st>::const_iterator itr1=tuples.begin(); itr1!=tuples.end(); itr1++){
+void statistics::populate_graph(const vector<statistics_st> &tuples) {
+    for (vector<statistics_st>::const_iterator itr1 = tuples.begin(); itr1 != tuples.end(); itr1++) {
         statistics_st tuple = *itr1;
-        if (graph.find(tuple._vertex1)==graph.end()){
+        if (graph.find(tuple._vertex1) == graph.end()) {
             graph.insert(pair<string, set<statistics_st> >(tuple._vertex1, set<statistics_st>()));
         }
         graph[tuple._vertex1].insert(tuple);
@@ -204,8 +211,9 @@ void statistics::populate_graph(const vector<statistics_st> & tuples){
 //            graph[inferred_vertex].insert(tuple);
 //        }
 
-        if (tuple._vertex2.compare("date") !=0 && tuple._vertex2.compare("integer") !=0 && tuple._vertex2.compare("name") !=0 && tuple._vertex2.compare("string")){
-            if (graph.find(tuple._vertex2)==graph.end()){
+        if (tuple._vertex2.compare("date") != 0 && tuple._vertex2.compare("integer") != 0 &&
+            tuple._vertex2.compare("name") != 0 && tuple._vertex2.compare("string")) {
+            if (graph.find(tuple._vertex2) == graph.end()) {
                 graph.insert(pair<string, set<statistics_st> >(tuple._vertex2, set<statistics_st>()));
             }
             graph[tuple._vertex2].insert(tuple);
@@ -222,24 +230,25 @@ void statistics::populate_graph(const vector<statistics_st> & tuples){
     }
 }
 
-void statistics::infer_edges(){
-    for (map<string, set<statistics_st> >::const_iterator itr1=graph.begin(); itr1!=graph.end(); itr1++){
+void statistics::infer_edges() {
+    for (map<string, set<statistics_st> >::const_iterator itr1 = graph.begin(); itr1 != graph.end(); itr1++) {
         string vertex = itr1->first;
         int pos = string::npos;
-        if ( (pos = vertex.find("@"))!=string::npos){
+        if ((pos = vertex.find("@")) != string::npos) {
             string base_vertex = vertex.substr(0, pos);
             // Insert all edges from base class...
             set<statistics_st> base_edges = graph[base_vertex];
-            for (set<statistics_st>::iterator itr2=base_edges.begin(); itr2!=base_edges.end(); itr2++){
+            for (set<statistics_st>::iterator itr2 = base_edges.begin(); itr2 != base_edges.end(); itr2++) {
                 graph[vertex].insert(*itr2);
             }
         }
     }
 }
 
-bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVertexAllowed, bool dupEdgesAllowed, map<pair<QUERY_STRUCTURE::enum_t, QUERY_CATEGORY::enum_t>, map<string, string> > & query_map) const{
+bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVertexAllowed, bool dupEdgesAllowed,
+                                map<pair<QUERY_STRUCTURE::enum_t, QUERY_CATEGORY::enum_t>, map<string, string> > &query_map, bool isStream) const {
     vector<string> v_array;
-    for (map<string, set<statistics_st> >::const_iterator itr1=graph.begin(); itr1!=graph.end(); itr1++){
+    for (map<string, set<statistics_st> >::const_iterator itr1 = graph.begin(); itr1 != graph.end(); itr1++) {
         v_array.push_back(itr1->first);
     }
 
@@ -252,12 +261,12 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
         vector<statistics_st> potential_edges;
         map<string, set<statistics_st> >::const_iterator fit = graph.find(v);
         set<statistics_st> incident_edges = fit->second;
-        for (set<statistics_st>::const_iterator itr1=incident_edges.begin(); itr1!=incident_edges.end(); itr1++){
-            if (dupEdgesAllowed || traversed_edges.find(*itr1)==traversed_edges.end()){
+        for (set<statistics_st>::const_iterator itr1 = incident_edges.begin(); itr1 != incident_edges.end(); itr1++) {
+            if (dupEdgesAllowed || traversed_edges.find(*itr1) == traversed_edges.end()) {
                 potential_edges.push_back(*itr1);
             }
         }
-        if (potential_edges.empty()){
+        if (potential_edges.empty()) {
             break;
         }
 
@@ -266,16 +275,16 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
         traversed_edges.insert(next_edge);
 
         vector<string> potential_next_vertices;
-        if (graph.find(next_edge._vertex1)!=graph.end()){
+        if (graph.find(next_edge._vertex1) != graph.end()) {
             potential_next_vertices.push_back(next_edge._vertex1);
         }
-        if (graph.find(next_edge._vertex2)!=graph.end()){
+        if (graph.find(next_edge._vertex2) != graph.end()) {
             potential_next_vertices.push_back(next_edge._vertex2);
         }
         v = potential_next_vertices[rand() % potential_next_vertices.size()];
 
         itr_counter++;
-    } while (traversed_edges.size()<max_size && itr_counter<(max_size*20));
+    } while (traversed_edges.size() < max_size && itr_counter < (max_size * 20));
 
     // Compute vertices in query graph...
     set<string> variable_set;
@@ -283,17 +292,25 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
     int var_count = 0;
     map<string, int> q_vertex_map;
     map<string, set<string> > variable_map;
-    for (set<statistics_st>::iterator itr1=traversed_edges.begin(); itr1!=traversed_edges.end(); itr1++){
+    //check whether this query contains stream triple or not
+    bool isStreamQuery = !isStream;
+    //stream edges
+    unordered_set<string> stream_edges{"wsdbm:likes", "wsdbm:follows", "wsdbm:subscribes", "gr:offers",
+                                       "gr:includes", "sorg:eligibleRegion", "wsdbm:makesPurchase", "wsdbm:purchaseFor",
+                                       "rev:reviewer", "rev:hasReview", "rev:rating", "rev:title", "rev:text", "rev:totalVotes",
+                                       "gr:price", "wsdbm:purchaseDate", "gr:serialNumber", "gr:price", "gr:validFrom",
+                                       "gr:validThrough", "sorg:priceValidUntil", "sorg:eligibleQuantity"};
+    for (set<statistics_st>::iterator itr1 = traversed_edges.begin(); itr1 != traversed_edges.end(); itr1++) {
         string var1 = "", var2 = "";
         string v1_base = itr1->_vertex1, v2_base = itr1->_vertex2;
         int pos = string::npos;
-        if ((pos=v1_base.find("@"))!=string::npos){
+        if ((pos = v1_base.find("@")) != string::npos) {
             v1_base = v1_base.substr(0, pos);
         }
-        if ((pos=v2_base.find("@"))!=string::npos){
+        if ((pos = v2_base.find("@")) != string::npos) {
             v2_base = v2_base.substr(0, pos);
         }
-        if (q_vertex_map.find(v1_base)==q_vertex_map.end()){
+        if (q_vertex_map.find(v1_base) == q_vertex_map.end()) {
             q_vertex_map.insert(pair<string, int>(v1_base, var_count));
             var_count++;
         }
@@ -303,9 +320,11 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
         query_str.append(var1);
         query_str.append("\t");
         query_str.append(itr1->_edge);
+        if(stream_edges.count(itr1->_edge)) isStreamQuery = true;
         query_str.append("\t");
-        if (v2_base.compare("date") !=0 && v2_base.compare("integer") !=0 && v2_base.compare("name") !=0 && v2_base.compare("string")){
-            if (q_vertex_map.find(v2_base)==q_vertex_map.end()){
+        if (v2_base.compare("date") != 0 && v2_base.compare("integer") != 0 && v2_base.compare("name") != 0 &&
+            v2_base.compare("string")) {
+            if (q_vertex_map.find(v2_base) == q_vertex_map.end()) {
                 q_vertex_map.insert(pair<string, int>(v2_base, var_count));
                 var_count++;
             }
@@ -321,17 +340,20 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
         query_str.append(" ");
         query_str.append(".");
         query_str.append("\n");
-        if (variable_map.find(var1)==variable_map.end()){
+        if (variable_map.find(var1) == variable_map.end()) {
             variable_map.insert(pair<string, set<string> >(var1, set<string>()));
         }
         variable_map[var1].insert(itr1->_vertex1);
-        if (variable_map.find(var2)==variable_map.end()){
+        if (variable_map.find(var2) == variable_map.end()) {
             variable_map.insert(pair<string, set<string> >(var2, set<string>()));
         }
         variable_map[var2].insert(itr1->_vertex2);
         variable_set.insert(var1);
         variable_set.insert(var2);
     }
+
+    //if need stream query, but generate a pure-static query, return false;
+    if(isStream&&!isStreamQuery) return false;
 
     /////////////////////////////////////////////////////////////////////////////
     // Put all traversed edges in a graph...
@@ -342,22 +364,23 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
 
     var_count = 0;
     map<string, set<statistics_st> > query_graph;
-    for (set<statistics_st>::iterator itr1 = traversed_edges.begin(); itr1!= traversed_edges.end(); itr1++){
+    for (set<statistics_st>::iterator itr1 = traversed_edges.begin(); itr1 != traversed_edges.end(); itr1++) {
         string v1_base = itr1->_vertex1, v2_base = itr1->_vertex2;
         int pos = string::npos;
-        if ((pos=v1_base.find("@"))!=string::npos){
+        if ((pos = v1_base.find("@")) != string::npos) {
             v1_base = v1_base.substr(0, pos);
         }
-        if ((pos=v2_base.find("@"))!=string::npos){
+        if ((pos = v2_base.find("@")) != string::npos) {
             v2_base = v2_base.substr(0, pos);
         }
-        if (query_graph.find(v1_base)==query_graph.end()){
+        if (query_graph.find(v1_base) == query_graph.end()) {
             query_graph.insert(pair<string, set<statistics_st> >(v1_base, set<statistics_st>()));
         }
         query_graph[v1_base].insert(*itr1);
 
-        if (v2_base.compare("date") !=0 && v2_base.compare("integer") !=0 && v2_base.compare("name") !=0 && v2_base.compare("string")){
-            if (query_graph.find(v2_base)==query_graph.end()){
+        if (v2_base.compare("date") != 0 && v2_base.compare("integer") != 0 && v2_base.compare("name") != 0 &&
+            v2_base.compare("string")) {
+            if (query_graph.find(v2_base) == query_graph.end()) {
                 query_graph.insert(pair<string, set<statistics_st> >(v2_base, set<statistics_st>()));
             }
             query_graph[v2_base].insert(*itr1);
@@ -489,73 +512,77 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
         query_map[index_key].insert(pair<string, string>(query_str, description));
     */
 
-        /// Randomly choose variables, ignore types date, integer, name or string...
-        /// You should also ignore variables corresponding to join vertices...
-        vector<string> eligible_list;
-        for (map<string, set<string> >::iterator itr=variable_map.begin(); itr!=variable_map.end(); itr++){
-            string var_type = *(itr->second.begin());
-            if (var_type.compare("date")==0 || var_type.compare("integer")==0 || var_type.compare("name")==0 || var_type.compare("string")==0){
-                continue;
-            }
-            eligible_list.push_back(itr->first);
+    /// Randomly choose variables, ignore types date, integer, name or string...
+    /// You should also ignore variables corresponding to join vertices...
+    vector<string> eligible_list;
+    for (map<string, set<string> >::iterator itr = variable_map.begin(); itr != variable_map.end(); itr++) {
+        string var_type = *(itr->second.begin());
+        if (var_type.compare("date") == 0 || var_type.compare("integer") == 0 || var_type.compare("name") == 0 ||
+            var_type.compare("string") == 0) {
+            continue;
         }
-        random_shuffle(eligible_list.begin(), eligible_list.end());
+        eligible_list.push_back(itr->first);
+    }
+    random_shuffle(eligible_list.begin(), eligible_list.end());
 
-        /// Select <const-count> variables...
-        if (eligible_list.size()>const_count){
-            eligible_list.erase(eligible_list.begin()+const_count, eligible_list.end());
-        }
+    /// Select <const-count> variables...
+    if (eligible_list.size() > const_count) {
+        eligible_list.erase(eligible_list.begin() + const_count, eligible_list.end());
+    }
 
-        bool varValid = true;
-        string mapping = "";
-        for (int vid=0; vid<eligible_list.size(); vid++){
-            string var_name = eligible_list[vid];
-            string var_root = var_name.substr(1);
+    bool varValid = true;
+    string mapping = "";
+    for (int vid = 0; vid < eligible_list.size(); vid++) {
+        string var_name = eligible_list[vid];
+        string var_root = var_name.substr(1);
 
-            mapping.append("#mapping");
-            mapping.append(" ");
-            mapping.append(var_root); /// Drop preceding '?'...
-            mapping.append(" ");
-            mapping.append(*(variable_map[var_name].begin()));
-            mapping.append(" ");
-            mapping.append("uniform");
-            mapping.append("\n");
+        mapping.append("#mapping");
+        mapping.append(" ");
+        mapping.append(var_root); /// Drop preceding '?'...
+        mapping.append(" ");
+        mapping.append(*(variable_map[var_name].begin()));
+        mapping.append(" ");
+        mapping.append("uniform");
+        mapping.append("\n");
 
-            boost::algorithm::replace_all(query_str, var_name + string(" "), string("%") + var_root + string("%") + string(" "));
-            boost::algorithm::replace_all(query_str, var_name + string("\t"), string("%") + var_root + string("%") + string("\t"));
+        boost::algorithm::replace_all(query_str, var_name + string(" "),
+                                      string("%") + var_root + string("%") + string(" "));
+        boost::algorithm::replace_all(query_str, var_name + string("\t"),
+                                      string("%") + var_root + string("%") + string("\t"));
 
-            if (!constJoinVertexAllowed){
-                string placeholder = string("%") + var_root + string("%");
-                if (query_str.find(placeholder)!=string::npos && query_str.find(placeholder)!=query_str.rfind(placeholder)){
-                    varValid = false;
-                }
-            }
-        }
-
-        bool qValid = false;
-        string qTemplate = "";
-        qTemplate.append(mapping);
-        qTemplate.append("SELECT ");
-        for (set<string>::iterator itr=variable_set.begin(); itr!=variable_set.end(); itr++){
-            string var_name = *itr;
-            if (find(eligible_list.begin(), eligible_list.end(), var_name)==eligible_list.end()){
-                qTemplate.append(var_name);
-                qTemplate.append(" ");
-                qValid = true;
+        if (!constJoinVertexAllowed) {
+            string placeholder = string("%") + var_root + string("%");
+            if (query_str.find(placeholder) != string::npos &&
+                query_str.find(placeholder) != query_str.rfind(placeholder)) {
+                varValid = false;
             }
         }
-        qTemplate.append("WHERE {");
-        qTemplate.append("\n");
-        qTemplate.append(query_str);
-        qTemplate.append("}");
-        qTemplate.append("\n");
-        qTemplate.append("#end");
-        qTemplate.append("\n");
+    }
 
-        if (varValid && qValid){
-            cout << qTemplate;
-            return true;
+    bool qValid = false;
+    string qTemplate = "";
+    qTemplate.append(mapping);
+    qTemplate.append("SELECT ");
+    for (set<string>::iterator itr = variable_set.begin(); itr != variable_set.end(); itr++) {
+        string var_name = *itr;
+        if (find(eligible_list.begin(), eligible_list.end(), var_name) == eligible_list.end()) {
+            qTemplate.append(var_name);
+            qTemplate.append(" ");
+            qValid = true;
         }
+    }
+    qTemplate.append("WHERE {");
+    qTemplate.append("\n");
+    qTemplate.append(query_str);
+    qTemplate.append("}");
+    qTemplate.append("\n");
+    qTemplate.append("#end");
+    qTemplate.append("\n");
+
+    if (varValid && qValid) {
+        cout << qTemplate;
+        return true;
+    }
     /*
     }
     */
@@ -563,16 +590,18 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
     return false;
 }
 
-void statistics::print_graph() const{
+void statistics::print_graph() const {
     int vertex_counter = 0;
-    cout<<"digraph rdf {"<<"\n";
-    for (map<string, set<statistics_st> >::const_iterator itr1=graph.begin(); itr1!=graph.end(); itr1++){
+    cout << "digraph rdf {" << "\n";
+    for (map<string, set<statistics_st> >::const_iterator itr1 = graph.begin(); itr1 != graph.end(); itr1++) {
         const set<statistics_st> edge_list = itr1->second;
-        cout<< itr1->first << " " << "[" << "label=\"" << itr1->first << "\"];" << "\n";
-        for (set<statistics_st>::const_iterator itr2=edge_list.begin(); itr2!=edge_list.end(); itr2++){
+        cout << itr1->first << " " << "[" << "label=\"" << itr1->first << "\"];" << "\n";
+        for (set<statistics_st>::const_iterator itr2 = edge_list.begin(); itr2 != edge_list.end(); itr2++) {
             // You need to handle literals separately...
-            if (itr2->_vertex2.compare("date") !=0 && itr2->_vertex2.compare("integer") !=0 && itr2->_vertex2.compare("name") !=0 && itr2->_vertex2.compare("string")){
-                cout << itr1->first << " -> " << itr2->_vertex2 << " " << "[" << "label=\"" << itr2->_edge << "\"];" << "\n";
+            if (itr2->_vertex2.compare("date") != 0 && itr2->_vertex2.compare("integer") != 0 &&
+                itr2->_vertex2.compare("name") != 0 && itr2->_vertex2.compare("string")) {
+                cout << itr1->first << " -> " << itr2->_vertex2 << " " << "[" << "label=\"" << itr2->_edge << "\"];" <<
+                "\n";
                 //cout << itr2->_vertex2<< " " << "[" << "label=\"" << itr2->_vertex2 << "\"];" << "\n";
             } else {
                 string vertex = "v";
@@ -582,7 +611,7 @@ void statistics::print_graph() const{
             }
         }
     }
-    cout<<"}"<<"\n";
+    cout << "}" << "\n";
 }
 
 /*
@@ -633,8 +662,8 @@ void statistics::print_stats() const{
 }
 */
 
-void statistics::index_triples(const vector<triple_st> & triple_array){
-    for (int i=0; i<triple_array.size(); i++){
+void statistics::index_triples(const vector<triple_st> &triple_array) {
+    for (int i = 0; i < triple_array.size(); i++) {
         _spo_index.push_back(triple_array[i]);
         _ops_index.push_back(triple_array[i]);
     }
@@ -642,32 +671,33 @@ void statistics::index_triples(const vector<triple_st> & triple_array){
     sort(_ops_index.begin(), _ops_index.end(), o_compare());
 }
 
-string statistics::get_key (string entity, string predicate, bool direction, DISTRIBUTION_TYPES::enum_t distribution) const{
+string statistics::get_key(string entity, string predicate, bool direction,
+                           DISTRIBUTION_TYPES::enum_t distribution) const {
     string result = "";
     result.append(entity);
     result.append("#");
     result.append(predicate);
     result.append("#");
-    if (direction){
+    if (direction) {
         result.append("t");
     } else {
         result.append("f");
     }
     result.append("#");
-    switch (distribution){
-        case DISTRIBUTION_TYPES::UNIFORM:{
+    switch (distribution) {
+        case DISTRIBUTION_TYPES::UNIFORM: {
             result.append("uniform");
             break;
         }
-        case DISTRIBUTION_TYPES::NORMAL:{
+        case DISTRIBUTION_TYPES::NORMAL: {
             result.append("normal");
             break;
         }
-        case DISTRIBUTION_TYPES::ZIPFIAN:{
+        case DISTRIBUTION_TYPES::ZIPFIAN: {
             result.append("zipfian");
             break;
         }
-        case DISTRIBUTION_TYPES::UNDEFINED:{
+        case DISTRIBUTION_TYPES::UNDEFINED: {
             result.append("undefined");
             break;
         }
