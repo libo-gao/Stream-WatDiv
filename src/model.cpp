@@ -3057,9 +3057,20 @@ int main(int argc, const char *argv[]) {
             // obtain a time-based seed:
             //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
             //shuffle (workload.begin(), workload.end(), std::default_random_engine(seed));
+            string cmd1 = "mkdir workload";
+            char ls_cmd1[100];
+            sprintf(ls_cmd1, cmd1.c_str());
+            system(ls_cmd1);
 
             for (int qid = 0; qid < workload.size(); qid++) {
+                string cmd1 = "mkdir workload/q_"+to_string(qid);
+                char ls_cmd1[100];
+                sprintf(ls_cmd1, cmd1.c_str());
+                system(ls_cmd1);
+                ofstream fout("wordload/q_"+to_string(qid)+"/ORACLE.query");
+                fout << workload[qid];
                 cout << workload[qid];
+                fout.close();
             }
 
             dictionary::destroy_instance();
@@ -3075,8 +3086,8 @@ int main(int argc, const char *argv[]) {
             cur_model.load("saved.txt");
             unsigned int query_count = boost::lexical_cast<unsigned int>(string(argv[(argc - 2)]));
             unsigned int recurrence_factor = boost::lexical_cast<unsigned int>(string(argv[(argc - 1)]));
-            vector<string> workload;
 
+            vector<string> workload;
             string line, qTemplateStr = "";
             while (getline(cin, line)) {
                 if (boost::starts_with(line, "#end")) {
@@ -3093,22 +3104,10 @@ int main(int argc, const char *argv[]) {
             // obtain a time-based seed:
             //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
             //shuffle (workload.begin(), workload.end(), std::default_random_engine(seed));
-
-            string cmd1 = "mkdir workload";
-            char ls_cmd1[100];
-            sprintf(ls_cmd1, cmd1.c_str());
-            system(ls_cmd1);
-
             for (int qid = 0; qid < workload.size(); qid++) {
-                string cmd1 = "mkdir workload/q_"+to_string(qid);
-                char ls_cmd1[100];
-                sprintf(ls_cmd1, cmd1.c_str());
-                system(ls_cmd1);
-                ofstream fout("wordload/q_"+to_string(qid)+"/ORACLE.query");
-                fout << workload[qid];
                 cout << workload[qid];
-                fout.close();
             }
+
             dictionary::destroy_instance();
             return 0;
         } else if (argc >= 6 && argv[1][0] == '-' && argv[1][1] == 'q') {
