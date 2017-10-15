@@ -3019,7 +3019,6 @@ int main(int argc, const char *argv[]) {
             cur_model.generate_stream_data(static_scale_factor, stream_scale_factor);
             cur_model.save("saved.txt");
             output_stream_file();
-            //process_stream_file();
             dictionary::destroy_instance();
             return 0;
         //./watdiv -ts <source-file> <dest-file> <interval>
@@ -3095,8 +3094,20 @@ int main(int argc, const char *argv[]) {
             //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
             //shuffle (workload.begin(), workload.end(), std::default_random_engine(seed));
 
+            string cmd1 = "mkdir workload";
+            char ls_cmd1[100];
+            sprintf(ls_cmd1, cmd1.c_str());
+            system(ls_cmd1);
+
             for (int qid = 0; qid < workload.size(); qid++) {
+                string cmd1 = "mkdir workload/q_"+to_string(qid);
+                char ls_cmd1[100];
+                sprintf(ls_cmd1, cmd1.c_str());
+                system(ls_cmd1);
+                ofstream fout("wordload/q_"+to_string(qid)+"/ORACLE.query");
+                fout << workload[qid];
                 cout << workload[qid];
+                fout.close();
             }
             dictionary::destroy_instance();
             return 0;

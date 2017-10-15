@@ -580,10 +580,13 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
     qTemplate.append("#end");
     qTemplate.append("\n");
 
-    ofstream fos_stream("workload.txt");
 
     if (varValid && qValid) {
-        if(isStream) fos_stream<<qTemplate;
+        if(isStream) {
+            ofstream fos_stream("workload.txt", std::ofstream::app);
+            fos_stream<<qTemplate;
+            fos_stream.close();
+        }
         else cout << qTemplate;
         return true;
     }
