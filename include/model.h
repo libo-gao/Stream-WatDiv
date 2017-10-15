@@ -97,10 +97,12 @@ struct triple_st {
     string _object;
 
     triple_st (const string & line);
+    triple_st (const string & line, bool stream);
     triple_st (const string & subject, const string & predicate, const string & object);
     bool operator== (const triple_st & rhs) const;
 
     static vector<triple_st> parse_file (const char * filename);
+    static vector<triple_st> parse_stream_file (const char * filename);
 };
 
 ostream& operator<<(ostream& os, const triple_st & triple);

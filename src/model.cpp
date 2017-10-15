@@ -85,6 +85,17 @@ triple_st::triple_st(const string &line) {
     _object = result[2];
 }
 
+//construct triple(s, p, p) from string-presented input
+triple_st::triple_st(const string &line, bool stream) {
+    vector<string> result;
+    string trimmed = line;
+    boost::trim(trimmed);
+    boost::algorithm::split(result, trimmed, boost::is_any_of("\t"));
+    _subject = '<'+result[0]+'>';
+    _predicate = '<'+result[1]+'>';
+    _object = '<'+result[2]+'>';
+}
+
 triple_st::triple_st(const string &subject, const string &predicate, const string &object) {
     _subject = subject;
     _predicate = predicate;
@@ -103,6 +114,19 @@ vector<triple_st> triple_st::parse_file(const char *filename) {
     string line;
     while (getline(ifs, line)) {
         triple_st cur_triple(line);
+        result.push_back(cur_triple);
+        //cout << cur_triple << "\n";
+    }
+    ifs.close();
+    return result;
+}
+
+vector<triple_st> triple_st::parse_stream_file(const char *filename) {
+    vector<triple_st> result;
+    ifstream ifs(filename);
+    string line;
+    while (getline(ifs, line)) {
+        triple_st cur_triple(line, true);
         result.push_back(cur_triple);
         //cout << cur_triple << "\n";
     }
@@ -3011,11 +3035,11 @@ int main(int argc, const char *argv[]) {
             vector<triple_st> triple_array = triple_st::parse_file(argv[3]);
             vector<triple_st> stream_file = triple_st::parse_file(argv[4]);
             triple_array.insert(triple_array.end(), stream_file.begin(), stream_file.end());
-            int maxQSize = boost::lexical_cast<int>(argv[4]);
-            int qCount = boost::lexical_cast<int>(argv[5]);
-            int constCount = boost::lexical_cast<int>(argv[6]);
-            statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[7][0] == 't',
-                            argv[8][0] == 't');
+            int maxQSize = boost::lexical_cast<int>(argv[5]);
+            int qCount = boost::lexical_cast<int>(argv[6]);
+            int constCount = boost::lexical_cast<int>(argv[7]);
+            statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[8][0] == 't',
+                            argv[9][0] == 't');
             dictionary::destroy_instance();
             return 0;
         } else if (argc == 4 && argv[1][0] == '-' && argv[1][1] == 'd') {
