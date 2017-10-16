@@ -3039,7 +3039,7 @@ int main(int argc, const char *argv[]) {
             int constCount = boost::lexical_cast<int>(argv[7]);
             statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[8][0] == 't',
                             argv[9][0] == 't', true);
-            remove("workload.txt");
+            //remove("workload.txt");
             ifstream fin("workload.txt");
             vector<string> workload;
             string line, qTemplateStr = "";
@@ -3079,15 +3079,15 @@ int main(int argc, const char *argv[]) {
                 fos.close();
                 ifstream fis("workload/csparql/q_"+to_string(qid)+"/ORACLE.query");
                 ofstream fos2("workload/csparql/q_"+to_string(qid)+"/ENGINE.query");
-                fos2<<"REGISTER QUERY test AS";
+                fos2<<"REGISTER QUERY test AS"<<"\n";
                 string temp = "";
                 getline(fis, temp);
                 auto ind = temp.find("WHERE");
-                fos2<<temp.substr(0, ind);
-                fos2<<"FROM STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} STEP ${WSLIDE}]";
-                fos2<<"WHERE{";
+                fos2<<temp.substr(0, ind)<<"\n";
+                fos2<<"FROM STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} STEP ${WSLIDE}]"<<"\n";
+                fos2<<"WHERE{"<<"\n";
                 while(getline(fis, temp)){
-                    fos2<<temp;
+                    fos2<<temp<<"\n";
                 }
                 fos2.close();
                 fis.close();
@@ -3111,8 +3111,10 @@ int main(int argc, const char *argv[]) {
                 ofstream fos4("workload/cqels/q_"+to_string(qid)+"/ENGINE.query");
                 string temp = "";
                 getline(fis, temp);
-                fos4<<temp;
-                fos4<<"FROM NAMED <http://dsg.uwaterloo.ca/watdiv/knowledge>";
+                auto ind = temp.find("WHERE");
+                fos4<<temp.substr(0, ind)<<"\n";
+                fos4<<"FROM NAMED <http://dsg.uwaterloo.ca/watdiv/knowledge>"<<"\n";
+                fos4<<"WHERE{"<<"\n";
                 vector<string> stream_edge;
                 vector<string> static_edge;
                 unordered_set<string> stream_edges{"<http://db.uwaterloo.ca/~galuc/wsdbm/likes>",
@@ -3147,12 +3149,12 @@ int main(int argc, const char *argv[]) {
                 }
                 fos4<<"STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} SLIDE ${WSLIDE}] {";
                 for(auto item : stream_edge){
-                    fos4<<item;
+                    fos4<<item<<"\n";
                 }
                 fos4<<"}";
                 fos4<<"GRAPH<http://dsg.uwaterloo.ca/watdiv/knowledge>{";
                 for(auto item : static_edge){
-                    fos4<<item;
+                    fos4<<item<<"\n";
                 }
                 fos4<<"}";
                 fos4<<"}";
