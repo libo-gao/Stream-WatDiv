@@ -3073,12 +3073,12 @@ int main(int argc, const char *argv[]) {
                 char ls_cmd1[100];
                 sprintf(ls_cmd1, cmd1.c_str());
                 system(ls_cmd1);
-                ofstream fos("workload/csparql/q_"+to_string(qid)+"/ORACLE.query");
+                ofstream fos("workload/csparql/q_"+to_string(qid)+"/oracle.query");
                 fos << workload[qid];
                 cout << workload[qid];
                 fos.close();
-                ifstream fis("workload/csparql/q_"+to_string(qid)+"/ORACLE.query");
-                ofstream fos2("workload/csparql/q_"+to_string(qid)+"/ENGINE.query");
+                ifstream fis("workload/csparql/q_"+to_string(qid)+"/oracle.query");
+                ofstream fos2("workload/csparql/q_"+to_string(qid)+"/engine.query");
                 fos2<<"REGISTER QUERY test AS"<<"\n";
                 string temp = "";
                 getline(fis, temp);
@@ -3088,7 +3088,7 @@ int main(int argc, const char *argv[]) {
                 fos2<<"FROM <http://dsg.uwaterloo.ca/watdiv/knowledge>"<<"\n";
                 fos2<<"WHERE{"<<"\n";
                 while(getline(fis, temp)){
-                    fos2<<"\t"<<temp<<"\n";
+                    fos2<<temp<<"\n";
                 }
                 fos2.close();
                 fis.close();
@@ -3104,12 +3104,12 @@ int main(int argc, const char *argv[]) {
                 char ls_cmd1[100];
                 sprintf(ls_cmd1, cmd1.c_str());
                 system(ls_cmd1);
-                ofstream fos3("workload/cqels/q_"+to_string(qid)+"/ORACLE.query");
+                ofstream fos3("workload/cqels/q_"+to_string(qid)+"/oracle.query");
                 fos3 << workload[qid];
                 cout << workload[qid];
                 fos3.close();
-                ifstream fis("workload/cqels/q_"+to_string(qid)+"/ORACLE.query");
-                ofstream fos4("workload/cqels/q_"+to_string(qid)+"/ENGINE.query");
+                ifstream fis("workload/cqels/q_"+to_string(qid)+"/oracle.query");
+                ofstream fos4("workload/cqels/q_"+to_string(qid)+"/engine.query");
                 string temp = "";
                 getline(fis, temp);
                 auto ind = temp.find("WHERE");
@@ -3148,12 +3148,12 @@ int main(int argc, const char *argv[]) {
                     if(stream_edges.count(item)) stream_edge.push_back(temp);
                     else static_edge.push_back(temp);
                 }
-                fos4<<"\t"<<"STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} SLIDE ${WSLIDE}] {";
+                fos4<<"\t"<<"STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} SLIDE ${WSLIDE}] {"<<"\n";
                 for(auto item : stream_edge){
                     fos4<<item<<"\n";
                 }
                 fos4<<"\t"<<"}";
-                fos4<<"\t"<<"GRAPH<http://dsg.uwaterloo.ca/watdiv/knowledge>{";
+                fos4<<"\t"<<"GRAPH<http://dsg.uwaterloo.ca/watdiv/knowledge>{"<<"\n";
                 for(auto item : static_edge){
                     fos4<<item<<"\n";
                 }
