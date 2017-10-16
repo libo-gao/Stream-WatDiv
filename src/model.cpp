@@ -3039,7 +3039,7 @@ int main(int argc, const char *argv[]) {
             int constCount = boost::lexical_cast<int>(argv[7]);
             statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[8][0] == 't',
                             argv[9][0] == 't', true);
-
+            remove("workload.txt");
             ifstream fin("workload.txt");
             vector<string> workload;
             string line, qTemplateStr = "";
@@ -3063,15 +3063,99 @@ int main(int argc, const char *argv[]) {
             sprintf(ls_cmd1, cmd1.c_str());
             system(ls_cmd1);
 
+            string cmd2 = "mkdir workload/csparql";
+            char ls_cmd2[100];
+            sprintf(ls_cmd2, cmd2.c_str());
+            system(ls_cmd2);
+
             for (int qid = 0; qid < workload.size(); qid++) {
-                string cmd1 = "mkdir workload/q_"+to_string(qid);
+                string cmd1 = "mkdir workload/csparql/q_"+to_string(qid);
                 char ls_cmd1[100];
                 sprintf(ls_cmd1, cmd1.c_str());
                 system(ls_cmd1);
-                ofstream fos("workload/q_"+to_string(qid)+"/ORACLE.query");
+                ofstream fos("workload/csparql/q_"+to_string(qid)+"/ORACLE.query");
                 fos << workload[qid];
                 cout << workload[qid];
                 fos.close();
+                ifstream fis("workload/csparql/q_"+to_string(qid)+"/ORACLE.query");
+                ofstream fos2("workload/csparql/q_"+to_string(qid)+"/ENGINE.query");
+                fos2<<"REGISTER QUERY test AS";
+                string temp = "";
+                getline(fis, temp);
+                auto ind = temp.find("WHERE");
+                fos2<<temp.substr(0, ind);
+                fos2<<"FROM STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} STEP ${WSLIDE}]";
+                fos2<<"WHERE{";
+                while(getline(fis, temp)){
+                    fos2<<temp;
+                }
+                fos2.close();
+                fis.close();
+            }
+
+            string cmd3 = "mkdir workload/cqels";
+            char ls_cmd3[100];
+            sprintf(ls_cmd3, cmd3.c_str());
+            system(ls_cmd3);
+
+            for (int qid = 0; qid < workload.size(); qid++) {
+                string cmd1 = "mkdir workload/cqels/q_"+to_string(qid);
+                char ls_cmd1[100];
+                sprintf(ls_cmd1, cmd1.c_str());
+                system(ls_cmd1);
+                ofstream fos3("workload/cqels/q_"+to_string(qid)+"/ORACLE.query");
+                fos3 << workload[qid];
+                cout << workload[qid];
+                fos3.close();
+                ifstream fis("workload/cqels/q_"+to_string(qid)+"/ORACLE.query");
+                ofstream fos4("workload/cqels/q_"+to_string(qid)+"/ENGINE.query");
+                string temp = "";
+                getline(fis, temp);
+                fos4<<temp;
+                fos4<<"FROM NAMED <http://dsg.uwaterloo.ca/watdiv/knowledge>";
+                vector<string> stream_edge;
+                vector<string> static_edge;
+                unordered_set<string> stream_edges{"<http://db.uwaterloo.ca/~galuc/wsdbm/likes>",
+                                                   "<http://db.uwaterloo.ca/~galuc/wsdbm/follows>",
+                                                   "<http://db.uwaterloo.ca/~galuc/wsdbm/subscribes>",
+                                                   "<http://purl.org/goodrelations/offers>",
+                                                   "<http://purl.org/goodrelations/includes>",
+                                                   "<http://schema.org/eligibleRegion>",
+                                                   "<http://db.uwaterloo.ca/~galuc/wsdbm/makesPurchase>",
+                                                   "<http://db.uwaterloo.ca/~galuc/wsdbm/purchaseFor>",
+                                                   "<http://purl.org/stuff/rev#reviewer>",
+                                                   "<http://purl.org/stuff/rev#hasReview>",
+                                                   "<http://purl.org/stuff/rev#rating>",
+                                                   "<http://purl.org/stuff/rev#title>",
+                                                   "<http://purl.org/stuff/rev#text>",
+                                                   "<http://purl.org/stuff/rev#totalVotes>",
+                                                   "<http://purl.org/goodrelations/price>",
+                                                   "<http://db.uwaterloo.ca/~galuc/wsdbm/purchaseDate>",
+                                                   "<http://purl.org/goodrelations/serialNumber>",
+                                                   "<http://purl.org/goodrelations/price>",
+                                                   "<http://purl.org/goodrelations/validFrom>",
+                                                   "<http://purl.org/goodrelations/validThrough>",
+                                                   "<http://schema.org/priceValidUntil>",
+                                                   "<http://schema.org/eligibleQuantity>"};
+
+                while(getline(fis, temp)){
+                    istringstream is(temp);
+                    string item = "";
+                    is>>item>>item;
+                    if(stream_edges.count(item)) stream_edge.push_back(item);
+                    else static_edge.push_back(item);
+                }
+                fos4<<"STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} SLIDE ${WSLIDE}] {";
+                for(auto item : stream_edge){
+                    fos4<<item;
+                }
+                fos4<<"}";
+                fos4<<"GRAPH<http://dsg.uwaterloo.ca/watdiv/knowledge>{";
+                for(auto item : static_edge){
+                    fos4<<item;
+                }
+                fos4<<"}";
+                fos4<<"}";
             }
 
             dictionary::destroy_instance();
