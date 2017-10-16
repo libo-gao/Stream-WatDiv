@@ -247,151 +247,156 @@ void statistics::infer_edges() {
 }
 
 bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVertexAllowed, bool dupEdgesAllowed,
-                                map<pair<QUERY_STRUCTURE::enum_t, QUERY_CATEGORY::enum_t>, map<string, string> > &query_map, bool isStream) const {
+                                map<pair<QUERY_STRUCTURE::enum_t, QUERY_CATEGORY::enum_t>, map<string, string> > &query_map,
+                                bool isStream) const {
     vector<string> v_array;
     for (map<string, set<statistics_st> >::const_iterator itr1 = graph.begin(); itr1 != graph.end(); itr1++) {
         v_array.push_back(itr1->first);
     }
 
-    string v = v_array[rand() % v_array.size()];
-
-    set<statistics_st> traversed_edges;
-    //multiset<statistics_st> traversed_edges;
-    int itr_counter = 0;
-    do {
-        vector<statistics_st> potential_edges;
-        map<string, set<statistics_st> >::const_iterator fit = graph.find(v);
-        set<statistics_st> incident_edges = fit->second;
-        for (set<statistics_st>::const_iterator itr1 = incident_edges.begin(); itr1 != incident_edges.end(); itr1++) {
-            if (dupEdgesAllowed || traversed_edges.find(*itr1) == traversed_edges.end()) {
-                potential_edges.push_back(*itr1);
-            }
-        }
-        if (potential_edges.empty()) {
-            break;
-        }
-
-        statistics_st next_edge = potential_edges[rand() % potential_edges.size()];
-        //cout << "\t" << "(" << next_edge._vertex1 << ", " << next_edge._edge << ", " << next_edge._vertex2 << ")" << "\n";
-        traversed_edges.insert(next_edge);
-
-        vector<string> potential_next_vertices;
-        if (graph.find(next_edge._vertex1) != graph.end()) {
-            potential_next_vertices.push_back(next_edge._vertex1);
-        }
-        if (graph.find(next_edge._vertex2) != graph.end()) {
-            potential_next_vertices.push_back(next_edge._vertex2);
-        }
-        v = potential_next_vertices[rand() % potential_next_vertices.size()];
-
-        itr_counter++;
-    } while (traversed_edges.size() < max_size && itr_counter < (max_size * 20));
-
-    // Compute vertices in query graph...
     set<string> variable_set;
     string query_str = "";
-    int var_count = 0;
-    map<string, int> q_vertex_map;
     map<string, set<string> > variable_map;
-    //check whether this query contains stream triple or not
-    bool isStreamQuery = !isStream;
     //stream edges
     unordered_set<string> stream_edges{"wsdbm:likes", "wsdbm:follows", "wsdbm:subscribes", "gr:offers",
-                                       "gr:includes", "sorg:eligibleRegion", "wsdbm:makesPurchase", "wsdbm:purchaseFor",
-                                       "rev:reviewer", "rev:hasReview", "rev:rating", "rev:title", "rev:text", "rev:totalVotes",
-                                       "gr:price", "wsdbm:purchaseDate", "gr:serialNumber", "gr:price", "gr:validFrom",
+                                       "gr:includes", "sorg:eligibleRegion", "wsdbm:makesPurchase",
+                                       "wsdbm:purchaseFor",
+                                       "rev:reviewer", "rev:hasReview", "rev:rating", "rev:title", "rev:text",
+                                       "rev:totalVotes",
+                                       "gr:price", "wsdbm:purchaseDate", "gr:serialNumber", "gr:price",
+                                       "gr:validFrom",
                                        "gr:validThrough", "sorg:priceValidUntil", "sorg:eligibleQuantity"};
-    for (set<statistics_st>::iterator itr1 = traversed_edges.begin(); itr1 != traversed_edges.end(); itr1++) {
-        string var1 = "", var2 = "";
-        string v1_base = itr1->_vertex1, v2_base = itr1->_vertex2;
-        int pos = string::npos;
-        if ((pos = v1_base.find("@")) != string::npos) {
-            v1_base = v1_base.substr(0, pos);
-        }
-        if ((pos = v2_base.find("@")) != string::npos) {
-            v2_base = v2_base.substr(0, pos);
-        }
-        if (q_vertex_map.find(v1_base) == q_vertex_map.end()) {
-            q_vertex_map.insert(pair<string, int>(v1_base, var_count));
-            var_count++;
-        }
-        var1.append("?v");
-        var1.append(boost::lexical_cast<string>(q_vertex_map[v1_base]));
-        query_str.append("\t");
-        query_str.append(var1);
-        query_str.append("\t");
-        query_str.append(itr1->_edge);
-        if(stream_edges.count(itr1->_edge)) isStreamQuery = true;
-        query_str.append("\t");
-        if (v2_base.compare("date") != 0 && v2_base.compare("integer") != 0 && v2_base.compare("name") != 0 &&
-            v2_base.compare("string")) {
-            if (q_vertex_map.find(v2_base) == q_vertex_map.end()) {
-                q_vertex_map.insert(pair<string, int>(v2_base, var_count));
+
+        string v = v_array[rand() % v_array.size()];
+
+        set<statistics_st> traversed_edges;
+        //multiset<statistics_st> traversed_edges;
+        int itr_counter = 0;
+        do {
+            vector<statistics_st> potential_edges;
+            map<string, set<statistics_st> >::const_iterator fit = graph.find(v);
+            set<statistics_st> incident_edges = fit->second;
+            for (set<statistics_st>::const_iterator itr1 = incident_edges.begin();
+                 itr1 != incident_edges.end(); itr1++) {
+                if (dupEdgesAllowed || traversed_edges.find(*itr1) == traversed_edges.end()) {
+                    potential_edges.push_back(*itr1);
+                }
+            }
+            if (potential_edges.empty()) {
+                break;
+            }
+
+            statistics_st next_edge = potential_edges[rand() % potential_edges.size()];
+            //cout << "\t" << "(" << next_edge._vertex1 << ", " << next_edge._edge << ", " << next_edge._vertex2 << ")" << "\n";
+            traversed_edges.insert(next_edge);
+
+            vector<string> potential_next_vertices;
+            if (graph.find(next_edge._vertex1) != graph.end()) {
+                potential_next_vertices.push_back(next_edge._vertex1);
+            }
+            if (graph.find(next_edge._vertex2) != graph.end()) {
+                potential_next_vertices.push_back(next_edge._vertex2);
+            }
+            v = potential_next_vertices[rand() % potential_next_vertices.size()];
+
+            itr_counter++;
+        } while (traversed_edges.size() < max_size && itr_counter < (max_size * 20));
+
+        // Compute vertices in query graph...
+        int var_count = 0;
+        map<string, int> q_vertex_map;
+        //check whether this query contains stream triple or not
+        bool isStreamQuery = !isStream;
+        for (set<statistics_st>::iterator itr1 = traversed_edges.begin(); itr1 != traversed_edges.end(); itr1++) {
+            string var1 = "", var2 = "";
+            string v1_base = itr1->_vertex1, v2_base = itr1->_vertex2;
+            int pos = string::npos;
+            if ((pos = v1_base.find("@")) != string::npos) {
+                v1_base = v1_base.substr(0, pos);
+            }
+            if ((pos = v2_base.find("@")) != string::npos) {
+                v2_base = v2_base.substr(0, pos);
+            }
+            if (q_vertex_map.find(v1_base) == q_vertex_map.end()) {
+                q_vertex_map.insert(pair<string, int>(v1_base, var_count));
                 var_count++;
             }
-            var2.append("?v");
-            var2.append(boost::lexical_cast<string>(q_vertex_map[v2_base]));
-            query_str.append(var2);
-        } else {
-            var2.append("?v");
-            var2.append(boost::lexical_cast<string>(var_count));
-            query_str.append(var2);
-            var_count++;
-        }
-        query_str.append(" ");
-        query_str.append(".");
-        query_str.append("\n");
-        if (variable_map.find(var1) == variable_map.end()) {
-            variable_map.insert(pair<string, set<string> >(var1, set<string>()));
-        }
-        variable_map[var1].insert(itr1->_vertex1);
-        if (variable_map.find(var2) == variable_map.end()) {
-            variable_map.insert(pair<string, set<string> >(var2, set<string>()));
-        }
-        variable_map[var2].insert(itr1->_vertex2);
-        variable_set.insert(var1);
-        variable_set.insert(var2);
-    }
-
-    //if need stream query, but generate a pure-static query, return false;
-    if(isStream&&!isStreamQuery) return false;
-
-    /////////////////////////////////////////////////////////////////////////////
-    // Put all traversed edges in a graph...
-    // When constructing the graph, be careful to ignore literals...
-    // For each join vertex (i.e., vertex with more than one incident edge),
-    //  compute join selectivity.
-    /////////////////////////////////////////////////////////////////////////////
-
-    var_count = 0;
-    map<string, set<statistics_st> > query_graph;
-    for (set<statistics_st>::iterator itr1 = traversed_edges.begin(); itr1 != traversed_edges.end(); itr1++) {
-        string v1_base = itr1->_vertex1, v2_base = itr1->_vertex2;
-        int pos = string::npos;
-        if ((pos = v1_base.find("@")) != string::npos) {
-            v1_base = v1_base.substr(0, pos);
-        }
-        if ((pos = v2_base.find("@")) != string::npos) {
-            v2_base = v2_base.substr(0, pos);
-        }
-        if (query_graph.find(v1_base) == query_graph.end()) {
-            query_graph.insert(pair<string, set<statistics_st> >(v1_base, set<statistics_st>()));
-        }
-        query_graph[v1_base].insert(*itr1);
-
-        if (v2_base.compare("date") != 0 && v2_base.compare("integer") != 0 && v2_base.compare("name") != 0 &&
-            v2_base.compare("string")) {
-            if (query_graph.find(v2_base) == query_graph.end()) {
-                query_graph.insert(pair<string, set<statistics_st> >(v2_base, set<statistics_st>()));
+            var1.append("?v");
+            var1.append(boost::lexical_cast<string>(q_vertex_map[v1_base]));
+            query_str.append("\t");
+            query_str.append(var1);
+            query_str.append("\t");
+            query_str.append(itr1->_edge);
+            if (stream_edges.count(itr1->_edge)) isStreamQuery = true;
+            query_str.append("\t");
+            if (v2_base.compare("date") != 0 && v2_base.compare("integer") != 0 && v2_base.compare("name") != 0 &&
+                v2_base.compare("string")) {
+                if (v1_base==v2_base||q_vertex_map.find(v2_base) == q_vertex_map.end()) {
+                    q_vertex_map.insert(pair<string, int>(v2_base, var_count));
+                    var_count++;
+                }
+                var2.append("?v");
+                var2.append(boost::lexical_cast<string>(q_vertex_map[v2_base]));
+                query_str.append(var2);
+            } else {
+                var2.append("?v");
+                var2.append(boost::lexical_cast<string>(var_count));
+                query_str.append(var2);
+                var_count++;
             }
-            query_graph[v2_base].insert(*itr1);
-        } else {
-            string tmp_id = "?v";
-            tmp_id.append(boost::lexical_cast<string>(var_count));
-            query_graph[tmp_id].insert(*itr1);
-            var_count++;
+            query_str.append(" ");
+            query_str.append(".");
+            query_str.append("\n");
+            if (variable_map.find(var1) == variable_map.end()) {
+                variable_map.insert(pair<string, set<string> >(var1, set<string>()));
+            }
+            variable_map[var1].insert(itr1->_vertex1);
+            if (variable_map.find(var2) == variable_map.end()) {
+                variable_map.insert(pair<string, set<string> >(var2, set<string>()));
+            }
+            variable_map[var2].insert(itr1->_vertex2);
+            variable_set.insert(var1);
+            variable_set.insert(var2);
         }
-    }
+        //if need stream query, but generate a pure-static query, return false;
+        if (isStream && !isStreamQuery) return false;
+
+        /////////////////////////////////////////////////////////////////////////////
+        // Put all traversed edges in a graph...
+        // When constructing the graph, be careful to ignore literals...
+        // For each join vertex (i.e., vertex with more than one incident edge),
+        //  compute join selectivity.
+        /////////////////////////////////////////////////////////////////////////////
+
+        var_count = 0;
+        map<string, set<statistics_st> > query_graph;
+        for (set<statistics_st>::iterator itr1 = traversed_edges.begin(); itr1 != traversed_edges.end(); itr1++) {
+            string v1_base = itr1->_vertex1, v2_base = itr1->_vertex2;
+            int pos = string::npos;
+            if ((pos = v1_base.find("@")) != string::npos) {
+                v1_base = v1_base.substr(0, pos);
+            }
+            if ((pos = v2_base.find("@")) != string::npos) {
+                v2_base = v2_base.substr(0, pos);
+            }
+            if (query_graph.find(v1_base) == query_graph.end()) {
+                query_graph.insert(pair<string, set<statistics_st> >(v1_base, set<statistics_st>()));
+            }
+            query_graph[v1_base].insert(*itr1);
+
+            if (v2_base.compare("date") != 0 && v2_base.compare("integer") != 0 && v2_base.compare("name") != 0 &&
+                v2_base.compare("string")) {
+                if (query_graph.find(v2_base) == query_graph.end()) {
+                    query_graph.insert(pair<string, set<statistics_st> >(v2_base, set<statistics_st>()));
+                }
+                query_graph[v2_base].insert(*itr1);
+            } else {
+                string tmp_id = "?v";
+                tmp_id.append(boost::lexical_cast<string>(var_count));
+                query_graph[tmp_id].insert(*itr1);
+                var_count++;
+            }
+        }
 
     /*
     QUERY_STRUCTURE::enum_t query_structure = QUERY_STRUCTURE::UNDEFINED;
@@ -582,9 +587,9 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
 
 
     if (varValid && qValid) {
-        if(isStream) {
+        if (isStream) {
             ofstream fos_stream("workload.txt", std::ofstream::app);
-            fos_stream<<qTemplate;
+            fos_stream << qTemplate;
             fos_stream.close();
         }
         else cout << qTemplate;

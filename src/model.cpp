@@ -3039,6 +3039,7 @@ int main(int argc, const char *argv[]) {
             int constCount = boost::lexical_cast<int>(argv[7]);
             statistics stat(&cur_model, triple_array, maxQSize, qCount, constCount, argv[8][0] == 't',
                             argv[9][0] == 't', true);
+
             ifstream fin("workload.txt");
             vector<string> workload;
             string line, qTemplateStr = "";
@@ -3067,10 +3068,10 @@ int main(int argc, const char *argv[]) {
                 char ls_cmd1[100];
                 sprintf(ls_cmd1, cmd1.c_str());
                 system(ls_cmd1);
-                ofstream fout("wordload/q_"+to_string(qid)+"/ORACLE.query");
-                fout << workload[qid];
+                ofstream fos("workload/q_"+to_string(qid)+"/ORACLE.query");
+                fos << workload[qid];
                 cout << workload[qid];
-                fout.close();
+                fos.close();
             }
 
             dictionary::destroy_instance();
