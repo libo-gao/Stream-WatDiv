@@ -331,8 +331,12 @@ bool statistics::traverse_graph(int max_size, int const_count, bool constJoinVer
             query_str.append("\t");
             if (v2_base.compare("date") != 0 && v2_base.compare("integer") != 0 && v2_base.compare("name") != 0 &&
                 v2_base.compare("string")) {
-                if (v1_base==v2_base||q_vertex_map.find(v2_base) == q_vertex_map.end()) {
+                if (q_vertex_map.find(v2_base) == q_vertex_map.end()) {
                     q_vertex_map.insert(pair<string, int>(v2_base, var_count));
+                    var_count++;
+                }
+                if(v1_base==v2_base){
+                    q_vertex_map[v2_base] = var_count;
                     var_count++;
                 }
                 var2.append("?v");
