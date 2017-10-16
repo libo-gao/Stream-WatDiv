@@ -3085,9 +3085,10 @@ int main(int argc, const char *argv[]) {
                 auto ind = temp.find("WHERE");
                 fos2<<temp.substr(0, ind)<<"\n";
                 fos2<<"FROM STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} STEP ${WSLIDE}]"<<"\n";
+                fos2<<"FROM <http://dsg.uwaterloo.ca/watdiv/knowledge>"<<"\n";
                 fos2<<"WHERE{"<<"\n";
                 while(getline(fis, temp)){
-                    fos2<<temp<<"\n";
+                    fos2<<"\t"<<temp<<"\n";
                 }
                 fos2.close();
                 fis.close();
@@ -3144,19 +3145,19 @@ int main(int argc, const char *argv[]) {
                     istringstream is(temp);
                     string item = "";
                     is>>item>>item;
-                    if(stream_edges.count(item)) stream_edge.push_back(item);
-                    else static_edge.push_back(item);
+                    if(stream_edges.count(item)) stream_edge.push_back(temp);
+                    else static_edge.push_back(temp);
                 }
-                fos4<<"STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} SLIDE ${WSLIDE}] {";
+                fos4<<"\t"<<"STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} SLIDE ${WSLIDE}] {";
                 for(auto item : stream_edge){
                     fos4<<item<<"\n";
                 }
-                fos4<<"}";
-                fos4<<"GRAPH<http://dsg.uwaterloo.ca/watdiv/knowledge>{";
+                fos4<<"\t"<<"}";
+                fos4<<"\t"<<"GRAPH<http://dsg.uwaterloo.ca/watdiv/knowledge>{";
                 for(auto item : static_edge){
                     fos4<<item<<"\n";
                 }
-                fos4<<"}";
+                fos4<<"\t"<<"}";
                 fos4<<"}";
             }
 
