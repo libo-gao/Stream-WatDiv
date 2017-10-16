@@ -3142,6 +3142,7 @@ int main(int argc, const char *argv[]) {
                                                    "<http://schema.org/eligibleQuantity>"};
 
                 while(getline(fis, temp)){
+                    if(temp=="}") continue;
                     istringstream is(temp);
                     string item = "";
                     is>>item>>item;
@@ -3150,14 +3151,14 @@ int main(int argc, const char *argv[]) {
                 }
                 fos4<<"\t"<<"STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} SLIDE ${WSLIDE}] {"<<"\n";
                 for(auto item : stream_edge){
-                    fos4<<item<<"\n";
+                    fos4<<"    "<<item<<"\n";
                 }
-                fos4<<"\t"<<"}";
+                fos4<<"\t"<<"}"<<"\n";
                 fos4<<"\t"<<"GRAPH<http://dsg.uwaterloo.ca/watdiv/knowledge>{"<<"\n";
                 for(auto item : static_edge){
-                    fos4<<item<<"\n";
+                    fos4<<"    "<<item<<"\n";
                 }
-                fos4<<"\t"<<"}";
+                fos4<<"\t"<<"}"<<"\n";
                 fos4<<"}";
             }
 
