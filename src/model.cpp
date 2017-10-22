@@ -3149,16 +3149,20 @@ int main(int argc, const char *argv[]) {
                     if(stream_edges.count(item)) stream_edge.push_back(temp);
                     else static_edge.push_back(temp);
                 }
-                fos4<<"\t"<<"STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} SLIDE ${WSLIDE}] {"<<"\n";
-                for(auto item : stream_edge){
-                    fos4<<"    "<<item<<"\n";
+                if(!stream_edge.empty()) {
+                    fos4 << "\t" << "STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} SLIDE ${WSLIDE}] {" << "\n";
+                    for (auto item : stream_edge) {
+                        fos4 << "    " << item << "\n";
+                    }
+                    fos4 << "\t" << "}" << "\n";
                 }
-                fos4<<"\t"<<"}"<<"\n";
-                fos4<<"\t"<<"GRAPH<http://dsg.uwaterloo.ca/watdiv/knowledge>{"<<"\n";
-                for(auto item : static_edge){
-                    fos4<<"    "<<item<<"\n";
+                if(!static_edge.empty()) {
+                    fos4 << "\t" << "GRAPH<http://dsg.uwaterloo.ca/watdiv/knowledge>{" << "\n";
+                    for (auto item : static_edge) {
+                        fos4 << "    " << item << "\n";
+                    }
+                    fos4 << "\t" << "}" << "\n";
                 }
-                fos4<<"\t"<<"}"<<"\n";
                 fos4<<"}";
             }
 
