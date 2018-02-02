@@ -3086,7 +3086,7 @@ int main(int argc, const char *argv[]) {
                 fos2<<temp.substr(0, ind)<<"\n";
                 fos2<<"FROM STREAM <http://ex.org/streams/test> [RANGE ${WSIZE} STEP ${WSLIDE}]"<<"\n";
                 fos2<<"FROM <http://dsg.uwaterloo.ca/watdiv/knowledge>"<<"\n";
-                fos2<<"WHERE{"<<"\n";
+                fos2<<"WHERE {"<<"\n";
                 while(getline(fis, temp)){
                     fos2<<temp<<"\n";
                 }
